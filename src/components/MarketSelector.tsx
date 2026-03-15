@@ -1,25 +1,51 @@
 import React from 'react';
 import { PERP_MARKETS } from '@/config/markets';
 import { useTradingStore } from '@/store/tradingStore';
+import { useMarketData } from '@/hooks/useMarketData';
+
+const MarketTab = ({ market, isActive, onClick }: { market: any, isActive: boolean, onClick: () => void }) => {
+  const { currentPrice, priceChange24h } = useMarketData(market.geckoPool, '1h');
+
+  return (
+    <button
+      onClick={onClick}
+      className={`flex items-center gap-4 px-4 py-2 rounded-lg transition-all border ${
+        isActive
+          ? 'bg-[#1A1B2E] border-[#00D1CF] text-white shadow-[0_0_15px_rgba(0,209,207,0.1)]'
+          : 'bg-[#0C0D14] border-transparent text-[#8B8EA8] hover:bg-[#1A1B2E] hover:text-white'
+      }`}
+    >
+      <div className="flex flex-col items-start">
+        <span className="font-bold text-sm tracking-tight">{market.symbol}</span>
+        <span className="text-[10px] text-[#8B8EA8] uppercase">{market.baseAsset} Perpetual</span>
+      </div>
+      
+      <div className="flex flex-col items-end min-w-[80px]">
+        <span className="text-sm font-mono font-medium">
+          {currentPrice ? `$${currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })}` : '---'}
+        </span>
+        {priceChange24h !== null && (
+          <span className={`text-[10px] font-bold ${priceChange24h >= 0 ? 'text-[#00C896]' : 'text-[#FF4D6A]'}`}>
+            {priceChange24h >= 0 ? '+' : ''}{priceChange24h.toFixed(2)}%
+          </span>
+        )}
+      </div>
+    </button>
+  );
+};
 
 export const MarketSelector = () => {
   const { selectedMarket, setSelectedMarket } = useTradingStore();
 
   return (
-    <div className="flex items-center gap-2 p-4 border-b border-[#1A1B2E]">
+    <div className="flex items-center gap-3 p-4 border-b border-[#1A1B2E] bg-[#0C0D14] overflow-x-auto no-scrollbar">
       {PERP_MARKETS.map((market) => (
-        <button
+        <MarketTab
           key={market.symbol}
+          market={market}
+          isActive={selectedMarket === market.symbol}
           onClick={() => setSelectedMarket(market.symbol)}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
-            selectedMarket === market.symbol
-              ? 'bg-[#1A1B2E] text-white'
-              : 'text-[#8B8EA8] hover:text-white'
-          }`}
-        >
-          <span className="font-bold">{market.symbol}</span>
-          <span className="text-xs text-[#00C896]">+2.4%</span>
-        </button>
+        />
       ))}
     </div>
   );
