@@ -1,6 +1,12 @@
 import type { AppProps } from 'next/app';
 import { SolanaWalletProvider } from '@/providers/WalletProvider';
+import { Buffer } from 'buffer';
 import '@/styles/globals.css';
+
+if (typeof window !== 'undefined') {
+  window.global = window;
+  (window as any).Buffer = Buffer;
+}
 
 function MyApp({ Component, pageProps }: AppProps) {
   return (

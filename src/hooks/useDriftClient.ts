@@ -1,11 +1,16 @@
 import { useEffect, useState } from 'react';
 import { useAnchorWallet, useConnection } from '@solana/wallet-adapter-react';
+import { Buffer } from 'buffer';
 import { 
   DriftClient, 
   Wallet, 
-} from '@drift-labs/sdk';
+} from '@drift-labs/sdk/lib/browser';
 import { Connection, Keypair } from '@solana/web3.js';
 import { DRIFT_CONFIG } from '@/config/driftConfig';
+
+if (typeof window !== 'undefined') {
+  (window as any).Buffer = Buffer;
+}
 
 export const useDriftClient = () => {
   const { connection } = useConnection();
