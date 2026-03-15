@@ -47,17 +47,25 @@ jobs:
           ls -la .next/
           echo "✅ Build completed successfully on GitHub Actions"
 
-      - name: Prepare server directory
+      - name: Fix server directory permissions
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            mkdir -p /var/www/perps.solswap.cloud
-            rm -rf /var/www/perps.solswap.cloud/.next
-            rm -rf /var/www/perps.solswap.cloud/public
-            echo "✅ Server directory prepared"
+            # Fix ownership so admin user can write
+            sudo chown -R admin:admin /var/www/perps.solswap.cloud
+            sudo chmod -R 755 /var/www/perps.solswap.cloud
+            
+            # Recreate clean directory structure
+            sudo rm -rf /var/www/perps.solswap.cloud/.next
+            sudo rm -rf /var/www/perps.solswap.cloud/public
+            sudo rm -f /var/www/perps.solswap.cloud/.env.production
+            
+            # Verify permissions
+            ls -la /var/www/ | grep perps
+            echo "✅ Permissions fixed for admin user"
 
       - name: Copy built artifacts to server via SCP
         uses: appleboy/scp-action@v0.1.7
@@ -65,13 +73,7 @@ jobs:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: >
-            .next/,
-            public/,
-            package.json,
-            package-lock.json,
-            next.config.js,
-            .env.production
+          source: ".next/,public/,package.json,package-lock.json,next.config.js,.env.production"
           target: "/var/www/perps.solswap.cloud/"
 
       - name: Install production deps and start PM2 on server
@@ -104,6 +106,9 @@ jobs:
 
             # Setup PM2 startup on reboot
             pm2 startup systemd -u admin --hp /home/admin 2>/dev/null || true
+
+            # Final permission fix to ensure consistency
+            sudo chown -R admin:admin /var/www/perps.solswap.cloud
 
             # Verify running
             pm2 status
