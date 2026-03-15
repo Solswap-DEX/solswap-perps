@@ -1,0 +1,116 @@
+name: Deploy SolSwap Perps
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install ALL dependencies (build phase)
+        run: npm ci
+
+      - name: Create .env.production
+        run: |
+          echo "NEXT_PUBLIC_RPC_URL=${{ secrets.NEXT_PUBLIC_RPC_URL }}" \
+            >> .env.production
+          echo "NEXT_PUBLIC_WS_URL=${{ secrets.NEXT_PUBLIC_WS_URL }}" \
+            >> .env.production
+          echo "NEXT_PUBLIC_BUILDER_WALLET=5KUA4a4qFusTvJeSquKsBSEPvhiVedvaj8hE8pVp2vmz" \
+            >> .env.production
+          echo "NEXT_PUBLIC_SITE_URL=https://perps.solswap.cloud" \
+            >> .env.production
+          echo "=== .env.production keys (no values) ==="
+          cat .env.production | cut -d'=' -f1
+
+      - name: Build Next.js on GitHub Actions (NOT on server)
+        run: npm run build
+        env:
+          NEXT_PUBLIC_RPC_URL: ${{ secrets.NEXT_PUBLIC_RPC_URL }}
+          NEXT_PUBLIC_WS_URL: ${{ secrets.NEXT_PUBLIC_WS_URL }}
+          NEXT_PUBLIC_BUILDER_WALLET: 5KUA4a4qFusTvJeSquKsBSEPvhiVedvaj8hE8pVp2vmz
+          NEXT_PUBLIC_SITE_URL: https://perps.solswap.cloud
+
+      - name: Verify build output
+        run: |
+          ls -la .next/
+          echo "✅ Build completed successfully on GitHub Actions"
+
+      - name: Prepare server directory
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            mkdir -p /var/www/perps.solswap.cloud
+            rm -rf /var/www/perps.solswap.cloud/.next
+            rm -rf /var/www/perps.solswap.cloud/public
+            echo "✅ Server directory prepared"
+
+      - name: Copy built artifacts to server via SCP
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: >
+            .next/,
+            public/,
+            package.json,
+            package-lock.json,
+            next.config.js,
+            .env.production
+          target: "/var/www/perps.solswap.cloud/"
+
+      - name: Install production deps and start PM2 on server
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /var/www/perps.solswap.cloud
+
+            # Install ONLY production dependencies — no build
+            npm ci --omit=dev
+
+            # Install PM2 globally if not present
+            which pm2 || npm install -g pm2
+
+            # Stop and delete old process if exists
+            pm2 stop solswap-perps 2>/dev/null || true
+            pm2 delete solswap-perps 2>/dev/null || true
+
+            # Start app on port 3001
+            pm2 start npm \
+              --name "solswap-perps" \
+              -- start \
+              -- -p 3001
+
+            # Save PM2 process list
+            pm2 save
+
+            # Setup PM2 startup on reboot
+            pm2 startup systemd -u admin --hp /home/admin 2>/dev/null || true
+
+            # Verify running
+            pm2 status
+            echo "✅ solswap-perps running on port 3001"
+
+      - name: Health check
+        run: |
+          sleep 30
+          curl -f https://perps.solswap.cloud || exit 1
+          echo "✅ perps.solswap.cloud is responding"

@@ -1,0 +1,84 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg-primary: #0C0D14;
+  --bg-card: #1A1B2E;
+  --color-cyan: #00D1CF;
+  --color-purple: #7B61FF;
+  --color-green: #00C896;
+  --color-red: #FF4D6A;
+  --color-text: #FFFFFF;
+  --color-muted: #8B8EA8;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--color-text);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+.trading-container {
+  display: flex;
+  height: calc(100vh - 64px);
+  overflow: hidden;
+}
+
+.zone-a {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--bg-card);
+}
+
+.zone-b {
+  width: 400px;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--bg-primary);
+}
+
+.zone-c {
+  height: 250px;
+  border-top: 1px solid var(--bg-card);
+  background-color: var(--bg-primary);
+}
+
+.panel-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--bg-card);
+  color: var(--color-muted);
+}
+
+.btn-primary {
+  @apply w-full py-3 rounded-lg font-bold transition-all;
+  background-color: var(--color-cyan);
+  color: var(--bg-primary);
+}
+
+.btn-long {
+  @apply w-full py-3 rounded-lg font-bold transition-all;
+  background-color: var(--color-green);
+  color: white;
+}
+
+.btn-short {
+  @apply w-full py-3 rounded-lg font-bold transition-all;
+  background-color: var(--color-red);
+  color: white;
+}
+
+input {
+  @apply bg-transparent border rounded px-4 py-2 outline-none transition-all;
+  background-color: #161726;
+  border-color: #2D2E42;
+}
+
+input:focus {
+  border-color: var(--color-cyan);
+}
