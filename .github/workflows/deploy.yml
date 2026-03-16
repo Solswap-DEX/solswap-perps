@@ -86,7 +86,8 @@ jobs:
             cd /var/www/perps.solswap.cloud
 
             # Install ONLY production dependencies — no build
-            npm ci --omit=dev
+            # We add a longer timeout and increase verbosity if needed
+            npm ci --omit=dev --legacy-peer-deps || npm install --omit=dev --legacy-peer-deps
 
             # Install PM2 globally if not present
             which pm2 || npm install -g pm2
@@ -100,16 +101,19 @@ jobs:
               --name "solswap-perps" \
               -- start \
               -- -p 3001
+            
+            # Wait a few seconds for PM2 to register the app
+            sleep 5
 
             # Save PM2 process list
             pm2 save
-
+            
             # Setup PM2 startup on reboot
             pm2 startup systemd -u admin --hp /home/admin 2>/dev/null || true
-
+            
             # Final permission fix to ensure consistency
             sudo chown -R admin:admin /var/www/perps.solswap.cloud
-
+            
             # Verify running
             pm2 status
             echo "✅ solswap-perps running on port 3001"

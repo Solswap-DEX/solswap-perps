@@ -29,7 +29,7 @@ export const useMarketData = (pool: string, timeframe: string = '1h') => {
   const fetchData = async () => {
     try {
       const params = TIMEFRAME_MAP[timeframe] || TIMEFRAME_MAP['1h'];
-      const url = `https://api.geckoterminal.com/api/v2/ohlcv/solana/${pool}?timeframe=${params}&limit=300`;
+      const url = `https://api.geckoterminal.com/api/v2/networks/solana/pools/${pool}/ohlcv/${params}&limit=300`;
       
       const response = await fetch(url);
       const json = await response.json();
