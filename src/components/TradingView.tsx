@@ -11,7 +11,6 @@ export const TradingView: React.FC<TradingViewProps> = ({ pool, timeframe }) => 
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<any>(null);
   const candleSeriesRef = useRef<ISeriesApi<'Candlestick'>>(null);
-  const volumeSeriesRef = useRef<any>(null);
   const { candles, isLoading } = useMarketData(pool, timeframe);
 
   useEffect(() => {
@@ -19,7 +18,7 @@ export const TradingView: React.FC<TradingViewProps> = ({ pool, timeframe }) => 
 
     const chart = createChart(chartContainerRef.current, {
       width: chartContainerRef.current.clientWidth,
-      height: 400,
+      height: chartContainerRef.current.clientHeight || 400,
       layout: {
         background: { type: ColorType.Solid, color: '#0C0D14' },
         textColor: '#8B8EA8',
@@ -28,20 +27,13 @@ export const TradingView: React.FC<TradingViewProps> = ({ pool, timeframe }) => 
         vertLines: { color: '#1A1B2E' },
         horzLines: { color: '#1A1B2E' },
       },
-      crosshair: {
-        mode: CrosshairMode.Normal,
-      },
-      rightPriceScale: {
-        borderColor: '#1A1B2E',
-        scaleMargins: {
-          top: 0.1,
-          bottom: 0.2,
-        },
-      },
       timeScale: {
         borderColor: '#1A1B2E',
         timeVisible: true,
         secondsVisible: false,
+      },
+      rightPriceScale: {
+        borderColor: '#1A1B2E',
       },
     });
 
@@ -54,57 +46,32 @@ export const TradingView: React.FC<TradingViewProps> = ({ pool, timeframe }) => 
       wickDownColor: '#FF4D6A',
     });
 
-    const volumeSeries = chart.addHistogramSeries({
-      color: '#1A1B2E',
-      priceFormat: {
-        type: 'volume',
-      },
-      priceScaleId: '', // overlay
-    });
-
-    volumeSeries.priceScale().applyOptions({
-      scaleMargins: {
-        top: 0.8,
-        bottom: 0,
-      },
-    });
-
     chartRef.current = chart;
     (candleSeriesRef as any).current = candleSeries;
-    volumeSeriesRef.current = volumeSeries;
 
-    const handleResize = () => {
+    const resizeObserver = new ResizeObserver(() => {
       if (chartContainerRef.current) {
-        chart.applyOptions({ width: chartContainerRef.current.clientWidth });
+        chart.applyOptions({
+          width: chartContainerRef.current.clientWidth,
+        });
       }
-    };
-
-    window.addEventListener('resize', handleResize);
+    });
+    resizeObserver.observe(chartContainerRef.current);
 
     return () => {
-      window.removeEventListener('resize', handleResize);
+      resizeObserver.disconnect();
       chart.remove();
     };
-  }, []); // Only on mount
+  }, []);
 
   useEffect(() => {
-    if (candleSeriesRef.current && volumeSeriesRef.current && candles.length > 0) {
+    if (candleSeriesRef.current && candles.length > 0) {
       candleSeriesRef.current.setData(candles as CandlestickData[]);
-      
-      const volumeData = candles.map(c => ({
-        time: c.time,
-        value: c.volume || 0,
-        color: c.close >= c.open ? '#00C89644' : '#FF4D6A44',
-      }));
-      volumeSeriesRef.current.setData(volumeData);
-      
-      // Auto-scroll to latest
-      chartRef.current?.timeScale().scrollToPosition(0, true);
     }
   }, [candles]);
 
   return (
-    <div className="relative w-full h-[400px]">
+    <div className="relative w-full h-full min-h-[400px]">
       {isLoading && candles.length === 0 && (
         <div className="absolute inset-0 flex items-center justify-center bg-[#0C0D14]/50 z-10">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#00D1CF]"></div>

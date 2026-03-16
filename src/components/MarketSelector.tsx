@@ -1,11 +1,9 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { PERP_MARKETS } from '@/config/markets';
 import { useTradingStore } from '@/store/tradingStore';
-import { useMarketData } from '@/hooks/useMarketData';
+import { useMarketPrices } from '@/hooks/useMarketPrices';
 
-const MarketTab = ({ market, isActive, onClick }: { market: any, isActive: boolean, onClick: () => void }) => {
-  const { currentPrice, priceChange24h } = useMarketData(market.geckoPool, '1h');
-
+const MarketTab = ({ market, isActive, onClick, currentPrice }: { market: any, isActive: boolean, onClick: () => void, currentPrice: number | undefined }) => {
   return (
     <button
       onClick={onClick}
@@ -24,11 +22,6 @@ const MarketTab = ({ market, isActive, onClick }: { market: any, isActive: boole
         <span className="text-sm font-mono font-medium">
           {currentPrice ? `$${currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })}` : '---'}
         </span>
-        {priceChange24h !== null && (
-          <span className={`text-[10px] font-bold ${priceChange24h >= 0 ? 'text-[#00C896]' : 'text-[#FF4D6A]'}`}>
-            {priceChange24h >= 0 ? '+' : ''}{priceChange24h.toFixed(2)}%
-          </span>
-        )}
       </div>
     </button>
   );
@@ -36,6 +29,8 @@ const MarketTab = ({ market, isActive, onClick }: { market: any, isActive: boole
 
 export const MarketSelector = () => {
   const { selectedMarket, setSelectedMarket } = useTradingStore();
+  const mints = useMemo(() => PERP_MARKETS.map(m => m.mint), []);
+  const { prices } = useMarketPrices(mints);
 
   return (
     <div className="flex items-center gap-3 p-4 border-b border-[#1A1B2E] bg-[#0C0D14] overflow-x-auto no-scrollbar">
@@ -45,6 +40,7 @@ export const MarketSelector = () => {
           market={market}
           isActive={selectedMarket === market.symbol}
           onClick={() => setSelectedMarket(market.symbol)}
+          currentPrice={prices[market.mint]}
         />
       ))}
     </div>

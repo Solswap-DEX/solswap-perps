@@ -10,13 +10,13 @@ export type Candle = {
   volume?: number;
 };
 
-const TIMEFRAME_MAP: Record<string, { tf: string; agg: string }> = {
-  '1m': { tf: 'minute', agg: '1' },
-  '5m': { tf: 'minute', agg: '5' },
-  '15m': { tf: 'minute', agg: '15' },
-  '1h': { tf: 'hour', agg: '1' },
-  '4h': { tf: 'hour', agg: '4' },
-  '1D': { tf: 'day', agg: '1' },
+const TIMEFRAME_MAP: Record<string, string> = {
+  '1m': 'minute&aggregate=1',
+  '5m': 'minute&aggregate=5',
+  '15m': 'minute&aggregate=15',
+  '1h': 'hour&aggregate=1',
+  '4h': 'hour&aggregate=4',
+  '1D': 'day&aggregate=1',
 };
 
 export const useMarketData = (pool: string, timeframe: string = '1h') => {
@@ -28,11 +28,12 @@ export const useMarketData = (pool: string, timeframe: string = '1h') => {
 
   const fetchData = async () => {
     try {
-      const { tf, agg } = TIMEFRAME_MAP[timeframe] || TIMEFRAME_MAP['1h'];
-      const url = `https://api.geckoterminal.com/api/v2/networks/solana/pools/${pool}/ohlcv/${tf}?aggregate=${agg}&limit=300`;
+      const params = TIMEFRAME_MAP[timeframe] || TIMEFRAME_MAP['1h'];
+      const url = `https://api.geckoterminal.com/api/v2/ohlcv/solana/${pool}?timeframe=${params}&limit=300`;
       
-      const response = await axios.get(url);
-      const ohlcvData = response.data.data.attributes.ohlcv_list;
+      const response = await fetch(url);
+      const json = await response.json();
+      const ohlcvData = json.data.attributes.ohlcv_list;
       
       const formattedCandles: Candle[] = ohlcvData.map((item: any) => ({
         time: item[0],
@@ -48,7 +49,6 @@ export const useMarketData = (pool: string, timeframe: string = '1h') => {
         const lastCandle = formattedCandles[formattedCandles.length - 1];
         setCurrentPrice(lastCandle.close);
         
-        // Simple 24h change estimate if not using a specific price API
         const firstCandle = formattedCandles[0];
         const change = ((lastCandle.close - firstCandle.open) / firstCandle.open) * 100;
         setPriceChange24h(change);
@@ -65,7 +65,7 @@ export const useMarketData = (pool: string, timeframe: string = '1h') => {
 
   useEffect(() => {
     fetchData();
-    const interval = setInterval(fetchData, 30000); // 30s polling
+    const interval = setInterval(fetchData, 30000); 
     return () => clearInterval(interval);
   }, [pool, timeframe]);
 
