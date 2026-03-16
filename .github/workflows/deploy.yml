@@ -19,7 +19,7 @@ jobs:
           cache: 'npm'
 
       - name: Install ALL dependencies (build phase)
-        run: npm ci
+        run: npm ci --legacy-peer-deps
 
       - name: Create .env.production
         run: |
