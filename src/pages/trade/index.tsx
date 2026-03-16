@@ -21,24 +21,31 @@ const TradePage = () => {
     if (!currentPrice) return;
 
     const generateOrderBook = (basePrice: number) => {
-      const asks = Array.from({length: 10}, (_, i) => ({
-        price: (basePrice * (1 + (i+1) * 0.001)).toFixed(2),
-        size: (Math.random() * 100 + 10).toFixed(1),
-        total: (Math.random() * 1000 + 100).toFixed(0),
-      }))
-      const bids = Array.from({length: 10}, (_, i) => ({
-        price: (basePrice * (1 - (i+1) * 0.001)).toFixed(2),
-        size: (Math.random() * 100 + 10).toFixed(1),
-        total: (Math.random() * 1000 + 100).toFixed(0),
-      }))
-      return { asks: asks.reverse(), bids }
-    }
+      const precision = basePrice > 1000 ? 1 : 2;
+      const asks = Array.from({length: 12}, (_, i) => {
+        const price = basePrice * (1 + (i + 1) * 0.0005 + Math.random() * 0.0002);
+        return {
+          price: price.toFixed(precision),
+          size: (Math.random() * (20 / (i + 1)) + 0.1).toFixed(precision === 1 ? 2 : 1),
+          total: (Math.random() * 5000 + 500).toFixed(0),
+        };
+      });
+      const bids = Array.from({length: 12}, (_, i) => {
+        const price = basePrice * (1 - (i + 1) * 0.0005 - Math.random() * 0.0002);
+        return {
+          price: price.toFixed(precision),
+          size: (Math.random() * (20 / (i + 1)) + 0.1).toFixed(precision === 1 ? 2 : 1),
+          total: (Math.random() * 5000 + 500).toFixed(0),
+        };
+      });
+      return { asks: asks.reverse(), bids };
+    };
 
     setOrderBook(generateOrderBook(currentPrice));
 
     const interval = setInterval(() => {
       setOrderBook(generateOrderBook(currentPrice));
-    }, 3000);
+    }, 2500);
 
     return () => clearInterval(interval);
   }, [currentPrice]);
@@ -49,12 +56,13 @@ const TradePage = () => {
   useEffect(() => {
     if (!currentPrice) return;
     
-    const generateInitialTrades = () => Array.from({ length: 20 }).map((_, i) => ({
+    const precision = currentPrice > 1000 ? 1 : 2;
+    const generateInitialTrades = () => Array.from({ length: 25 }).map((_, i) => ({
       id: i,
-      price: (currentPrice + (Math.random() - 0.5) * currentPrice * 0.005).toFixed(2),
-      size: (Math.random() * 49.9 + 0.1).toFixed(2),
-      side: Math.random() > 0.5 ? 'BUY' : 'SELL',
-      time: new Date(Date.now() - Math.random() * 60000).toLocaleTimeString(),
+      price: (currentPrice + (Math.random() - 0.5) * currentPrice * 0.002).toFixed(precision),
+      size: (Math.random() * 10 + 0.01).toFixed(3),
+      side: Math.random() > 0.45 ? 'BUY' : 'SELL',
+      time: new Date(Date.now() - Math.random() * 600000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
     }));
 
     setTrades(generateInitialTrades());
@@ -63,14 +71,14 @@ const TradePage = () => {
       setTrades(prev => [
         {
           id: Date.now(),
-          price: (currentPrice + (Math.random() - 0.5) * currentPrice * 0.005).toFixed(2),
-          size: (Math.random() * 49.9 + 0.1).toFixed(2),
+          price: (currentPrice + (Math.random() - 0.5) * currentPrice * 0.001).toFixed(precision),
+          size: (Math.random() * 5 + 0.01).toFixed(3),
           side: Math.random() > 0.5 ? 'BUY' : 'SELL',
-          time: new Date().toLocaleTimeString(),
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
         },
-        ...prev.slice(0, 19)
+        ...prev.slice(0, 24)
       ]);
-    }, 2000);
+    }, 3000);
 
     return () => clearInterval(interval);
   }, [currentPrice]);
