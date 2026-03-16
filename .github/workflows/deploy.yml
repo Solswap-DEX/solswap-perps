@@ -1,13 +1,10 @@
 name: Deploy SolSwap Perps
-
 on:
   push:
     branches: [main]
-
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -18,23 +15,17 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
-      - name: Install ALL dependencies (build phase)
+      - name: Install dependencies
         run: npm ci --legacy-peer-deps
 
       - name: Create .env.production
         run: |
-          echo "NEXT_PUBLIC_RPC_URL=${{ secrets.NEXT_PUBLIC_RPC_URL }}" \
-            >> .env.production
-          echo "NEXT_PUBLIC_WS_URL=${{ secrets.NEXT_PUBLIC_WS_URL }}" \
-            >> .env.production
-          echo "NEXT_PUBLIC_BUILDER_WALLET=5KUA4a4qFusTvJeSquKsBSEPvhiVedvaj8hE8pVp2vmz" \
-            >> .env.production
-          echo "NEXT_PUBLIC_SITE_URL=https://perps.solswap.cloud" \
-            >> .env.production
-          echo "=== .env.production keys (no values) ==="
-          cat .env.production | cut -d'=' -f1
+          echo "NEXT_PUBLIC_RPC_URL=${{ secrets.NEXT_PUBLIC_RPC_URL }}" >> .env.production
+          echo "NEXT_PUBLIC_WS_URL=${{ secrets.NEXT_PUBLIC_WS_URL }}" >> .env.production
+          echo "NEXT_PUBLIC_BUILDER_WALLET=5KUA4a4qFusTvJeSquKsBSEPvhiVedvaj8hE8pVp2vmz" >> .env.production
+          echo "NEXT_PUBLIC_SITE_URL=https://perps.solswap.cloud" >> .env.production
 
-      - name: Build Next.js on GitHub Actions (NOT on server)
+      - name: Build Next.js
         run: npm run build
         env:
           NEXT_PUBLIC_RPC_URL: ${{ secrets.NEXT_PUBLIC_RPC_URL }}
@@ -44,79 +35,74 @@ jobs:
 
       - name: Verify build output
         run: |
-          ls -la .next/
-          echo "✅ Build completed successfully on GitHub Actions"
+          echo "Chunks count: $(find .next/static/chunks -name '*.js' | wc -l)"
+          ls .next/static/chunks/pages/
+          cat .next/BUILD_ID
 
-      - name: Fix server directory permissions
-        uses: appleboy/ssh-action@v1
-        with:
-          host: ${{ secrets.HOST }}
-          username: ${{ secrets.USERNAME }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
-            # Fix ownership so admin user can write
-            sudo chown -R admin:admin /var/www/perps.solswap.cloud
-            sudo chmod -R 755 /var/www/perps.solswap.cloud
-            
-            # Recreate clean directory structure
-            sudo rm -rf /var/www/perps.solswap.cloud/.next
-            sudo rm -rf /var/www/perps.solswap.cloud/public
-            sudo rm -f /var/www/perps.solswap.cloud/.env.production
-            
-            # Verify permissions
-            ls -la /var/www/ | grep perps
-            echo "✅ Permissions fixed for admin user"
+      - name: Package build artifacts
+        run: |
+          tar -czf deploy.tar.gz \
+            .next/ \
+            public/ \
+            package.json \
+            package-lock.json \
+            next.config.js \
+            .env.production
+          echo "Archive size: $(du -sh deploy.tar.gz)"
 
-      - name: Copy built artifacts to server via SCP
+      - name: Upload archive to server
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: ".next/,public/,package.json,package-lock.json,next.config.js,.env.production"
-          target: "/var/www/perps.solswap.cloud/"
+          source: "deploy.tar.gz"
+          target: "/tmp/"
 
-      - name: Install production deps and start PM2 on server
+      - name: Deploy on server
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            cd /var/www/perps.solswap.cloud
+            set -e
 
-            # Install ONLY production dependencies — no build
-            # We add a longer timeout and increase verbosity if needed
-            npm ci --omit=dev --legacy-peer-deps || npm install --omit=dev --legacy-peer-deps
-
-            # Install PM2 globally if not present
-            which pm2 || npm install -g pm2
-
-            # Stop and delete old process if exists
+            # Stop PM2 before replacing files
             pm2 stop solswap-perps 2>/dev/null || true
             pm2 delete solswap-perps 2>/dev/null || true
 
-            # Start app on port 3001
-            pm2 start npm \
-              --name "solswap-perps" \
-              -- start \
-              -- -p 3001
-            
-            # Wait a few seconds for PM2 to register the app
-            sleep 5
+            # Kill anything on port 3001
+            fuser -k 3001/tcp 2>/dev/null || true
+            sleep 2
 
-            # Save PM2 process list
-            pm2 save
-            
-            # Setup PM2 startup on reboot
-            pm2 startup systemd -u admin --hp /home/admin 2>/dev/null || true
-            
-            # Final permission fix to ensure consistency
+            # Clean old build
+            sudo rm -rf /var/www/perps.solswap.cloud/.next
+            sudo rm -rf /var/www/perps.solswap.cloud/public
+            sudo rm -f /var/www/perps.solswap.cloud/.env.production
+
+            # Extract new build
+            cd /var/www/perps.solswap.cloud
+            tar -xzf /tmp/deploy.tar.gz -C /var/www/perps.solswap.cloud
+            rm /tmp/deploy.tar.gz
+
+            # Verify chunks
+            echo "Chunks on server: $(find .next/static/chunks -name '*.js' | wc -l)"
+            cat .next/BUILD_ID
+
+            # Fix ownership
             sudo chown -R admin:admin /var/www/perps.solswap.cloud
-            
-            # Verify running
+
+            # Install production deps
+            npm ci --omit=dev --legacy-peer-deps || npm install --omit=dev --legacy-peer-deps
+
+            # Start PM2
+            pm2 start npm --name "solswap-perps" -- start -- -p 3001
+            sleep 5
+            pm2 save
+
             pm2 status
-            echo "✅ solswap-perps running on port 3001"
+            echo "✅ Deploy complete"
 
       - name: Health check
         run: |
