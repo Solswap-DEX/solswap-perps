@@ -5,7 +5,7 @@ export const PERP_MARKETS = [
     marketIndex: 0,
     minOrderSize: 0.1,
     tickSize: 0.001,
-    geckoPool: "58oQChx4yWmvKqM3yqBzKNxGKpb4YmJMCFmkTYGRBvA2",
+    geckoPool: "8sLbNZoA1cfnvMJLPfp98ZLAnFSYCFApfJKMbiXNLwxj",
     mint: "So11111111111111111111111111111111111111112",
   },
   {
@@ -14,7 +14,7 @@ export const PERP_MARKETS = [
     marketIndex: 1,
     minOrderSize: 0.001,
     tickSize: 1,
-    geckoPool: "A8YFbxQYFVqKZaoYJLLUVcQiWP7G2MeEgW5wsAQgMvFw",
+    geckoPool: "4nFbdT7DeXATvaRZfR3WqALGJnogMjqe9vf2H6C1WXBr",
     mint: "9n4nbM75f5Ui33ZbPYXn59EwSgE8CGsHtAeTH5YFeJ9E",
   },
   {
@@ -23,7 +23,7 @@ export const PERP_MARKETS = [
     marketIndex: 2,
     minOrderSize: 0.01,
     tickSize: 0.01,
-    geckoPool: "DVa7Qmb5ct9RCpaU7UTpSaf3GVMYz17vNVU67XpdCRut",
+    geckoPool: "4yrHms7ekgTBgJg77zJ33TsWrraqHsCXDtuSZqUsuGHb",
     mint: "7vfCXTUXx5WJV5JADk17DUJ4ksgau7utNKj4b963voxs",
   },
 ];
