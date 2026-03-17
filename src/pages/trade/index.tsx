@@ -14,6 +14,7 @@ const TradePage = () => {
   const currentMarket = PERP_MARKETS.find(m => m.symbol === selectedMarket) || PERP_MARKETS[0];
   const { currentPrice } = useMarketData(currentMarket.geckoPool, timeframe);
 
+  // Mock Order Book Logic
   const [orderBook, setOrderBook] = useState<{ asks: any[], bids: any[] }>({ asks: [], bids: [] });
 
   useEffect(() => {
@@ -49,6 +50,7 @@ const TradePage = () => {
     return () => clearInterval(interval);
   }, [currentPrice]);
 
+  // Mock Recent Trades Logic
   const [trades, setTrades] = useState<any[]>([]);
 
   useEffect(() => {
@@ -84,14 +86,18 @@ const TradePage = () => {
   return (
     <div className="flex flex-col h-screen bg-[#0C0D14] text-white overflow-hidden">
       <Header />
+      
       <main className="flex flex-col lg:flex-row flex-1 overflow-hidden min-h-0">
+        {/* Mobile: Order Form on TOP */}
         <div className="lg:hidden w-full p-4 border-b border-[#1A1B2E] bg-[#0C0D14] flex-shrink-0">
            <div className="bg-[#1A1B2E] rounded-xl p-4 border border-[#2D2E42]">
              <OrderForm />
            </div>
         </div>
-        <div className="flex-1 flex flex-col border-r border-[#1A1B2E] overflow-hidden min-h-0">
-          <div className="flex justify-between items-center bg-[#0C0D14] flex-shrink-0">
+
+        {/* Zone A: Chart & Market Info (65% width on Desktop) */}
+        <div className="flex-1 flex flex-col border-r border-[#1A1B2E] overflow-y-auto lg:overflow-hidden min-h-0">
+          <div className="flex justify-between items-center bg-[#0C0D14] sticky top-0 z-20 flex-shrink-0">
             <MarketSelector />
             <div className="flex gap-1 p-2 bg-[#0C0D14]">
               {['1m', '5m', '15m', '1h', '4h', '1D'].map(tf => (
@@ -107,15 +113,18 @@ const TradePage = () => {
               ))}
             </div>
           </div>
-          <div className="flex-1 min-h-0 relative">
+
+          <div className="flex-1 min-h-[400px] lg:min-h-0 relative">
             <TradingView pool={currentMarket.geckoPool} timeframe={timeframe} />
           </div>
-          <div className="flex flex-row h-[260px] border-t border-[#1A1B2E] flex-shrink-0">
-            <div className="flex-1 border-r border-[#1A1B2E] flex flex-col overflow-hidden">
-              <div className="p-3 border-b border-[#1A1B2E] flex-shrink-0">
+          
+          {/* Bottom section of Zone A (Order Book & Trades) */}
+          <div className="flex flex-col md:flex-row h-auto md:h-[350px] border-t border-[#1A1B2E] flex-shrink-0">
+            <div className="flex-1 border-r border-[#1A1B2E] flex flex-col overflow-hidden min-h-[300px] md:min-h-0">
+              <div className="p-4 border-b border-[#1A1B2E] flex-shrink-0">
                 <div className="text-xs font-bold text-[#8B8EA8] uppercase tracking-wider">Order Book</div>
               </div>
-              <div className="flex-1 overflow-y-auto p-3 font-mono text-[11px]">
+              <div className="flex-1 overflow-y-auto p-4 font-mono text-[11px]">
                 <div className="grid grid-cols-3 text-[#8B8EA8] mb-2 uppercase text-[10px] sticky top-0 bg-[#0C0D14] z-10">
                     <span>Price</span>
                     <span className="text-right">Size</span>
@@ -128,7 +137,7 @@ const TradePage = () => {
                         <span className="text-right text-[#8B8EA8]">${ask.total}</span>
                     </div>
                 ))}
-                <div className="my-1 py-1 border-y border-[#1A1B2E] text-center text-base font-bold text-[#00D1CF]">
+                <div className="my-2 py-2 border-y border-[#1A1B2E] text-center text-lg font-bold text-[#00D1CF]">
                     ${currentPrice?.toLocaleString() || '---'}
                 </div>
                 {orderBook.bids.map((bid, i) => (
@@ -140,11 +149,11 @@ const TradePage = () => {
                 ))}
               </div>
             </div>
-            <div className="flex-1 flex flex-col overflow-hidden">
-              <div className="p-3 border-b border-[#1A1B2E] flex-shrink-0">
+            <div className="flex-1 flex flex-col overflow-hidden min-h-[300px] md:min-h-0">
+              <div className="p-4 border-b border-[#1A1B2E] flex-shrink-0">
                 <div className="text-xs font-bold text-[#8B8EA8] uppercase tracking-wider">Recent Trades</div>
               </div>
-              <div className="flex-1 overflow-y-auto p-3 font-mono text-[11px]">
+              <div className="flex-1 overflow-y-auto p-4 font-mono text-[11px]">
                 <div className="grid grid-cols-3 text-[#8B8EA8] mb-2 uppercase text-[10px] sticky top-0 bg-[#0C0D14] z-10">
                     <span>Price</span>
                     <span className="text-right">Size</span>
@@ -163,7 +172,9 @@ const TradePage = () => {
             </div>
           </div>
         </div>
-        <div className="hidden lg:flex flex-col w-[380px] flex-shrink-0 p-4 border-l border-[#1A1B2E] bg-[#0C0D14] overflow-y-auto min-h-0">
+
+        {/* Zone B: Order Form (Fixed width on Desktop) */}
+        <div className="hidden lg:flex flex-col w-[400px] flex-shrink-0 p-4 border-l border-[#1A1B2E] bg-[#0C0D14] overflow-y-auto min-h-0">
           <div className="text-xs font-bold text-[#8B8EA8] mb-4 uppercase tracking-wider flex items-center gap-2 flex-shrink-0">
             <span className="w-2 h-2 rounded-full bg-[#00D1CF] animate-pulse"></span>
             Trade Execution
@@ -171,7 +182,8 @@ const TradePage = () => {
           <div className="bg-[#1A1B2E] rounded-xl p-6 border border-[#2D2E42] shadow-2xl flex-shrink-0">
              <OrderForm />
           </div>
-          <div className="mt-6 flex flex-col gap-4 px-2 mb-6 flex-shrink-0">
+
+          <div className="mt-8 flex flex-col gap-4 px-2 mb-8 flex-shrink-0">
             <div className="flex justify-between text-xs">
               <span className="text-[#8B8EA8]">Available Balance</span>
               <span className="text-white font-mono font-bold font-medium tracking-tight">0.00 USDC</span>
@@ -187,13 +199,15 @@ const TradePage = () => {
           </div>
         </div>
       </main>
-      <footer className="h-[200px] border-t border-[#1A1B2E] bg-[#0C0D14] flex flex-col flex-shrink-0">
-        <div className="flex gap-8 border-b border-[#1A1B2E] px-6 flex-shrink-0">
-          <button className="text-[#00D1CF] border-b-2 border-[#00D1CF] py-3 font-bold text-xs uppercase tracking-widest whitespace-nowrap">Positions</button>
-          <button className="text-[#8B8EA8] py-3 font-bold text-xs uppercase tracking-widest hover:text-white transition-colors whitespace-nowrap">Open Orders</button>
-          <button className="text-[#8B8EA8] py-3 font-bold text-xs uppercase tracking-widest hover:text-white transition-colors whitespace-nowrap">Trade History</button>
+
+      {/* Zone C: Account Panels */}
+      <footer className="h-auto lg:h-[300px] border-t border-[#1A1B2E] bg-[#0C0D14] flex flex-col flex-shrink-0">
+        <div className="flex overflow-x-auto gap-8 border-b border-[#1A1B2E] px-6 no-scrollbar">
+          <button className="text-[#00D1CF] border-b-2 border-[#00D1CF] py-4 font-bold text-xs uppercase tracking-widest whitespace-nowrap">Positions</button>
+          <button className="text-[#8B8EA8] py-4 font-bold text-xs uppercase tracking-widest hover:text-white transition-colors whitespace-nowrap">Open Orders</button>
+          <button className="text-[#8B8EA8] py-4 font-bold text-xs uppercase tracking-widest hover:text-white transition-colors whitespace-nowrap">Trade History</button>
         </div>
-        <div className="flex-1 overflow-y-auto bg-[#08090F]">
+        <div className="flex-1 overflow-y-auto bg-[#08090F] min-h-[200px]">
           <PositionsTable />
         </div>
       </footer>
