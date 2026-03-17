@@ -16,9 +16,16 @@ export const TradingView: React.FC<TradingViewProps> = ({ pool, timeframe }) => 
   useEffect(() => {
     if (!chartContainerRef.current) return;
 
+    const getContainerHeight = () => {
+      const h = chartContainerRef.current?.clientHeight || 0;
+      // Fallback height so the chart can render even if container
+      // is temporarily 0 during layout/hydration.
+      return h > 0 ? h : 320;
+    };
+
     const chart = createChart(chartContainerRef.current, {
       width: chartContainerRef.current.clientWidth,
-      height: chartContainerRef.current.clientHeight || 400,
+      height: getContainerHeight(),
       layout: {
         background: { type: ColorType.Solid, color: '#0C0D14' },
         textColor: '#8B8EA8',
@@ -53,6 +60,7 @@ export const TradingView: React.FC<TradingViewProps> = ({ pool, timeframe }) => 
       if (chartContainerRef.current) {
         chart.applyOptions({
           width: chartContainerRef.current.clientWidth,
+          height: getContainerHeight(),
         });
       }
     });
@@ -71,7 +79,7 @@ export const TradingView: React.FC<TradingViewProps> = ({ pool, timeframe }) => 
   }, [candles]);
 
   return (
-    <div className="relative w-full h-full min-h-[400px]">
+    <div className="relative w-full h-full min-h-0">
       {isLoading && candles.length === 0 && (
         <div className="absolute inset-0 flex items-center justify-center bg-[#0C0D14]/50 z-10">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#00D1CF]"></div>
