@@ -108,7 +108,7 @@ const TradePage = () => {
                 <div className="text-xs font-bold text-[#8B8EA8] uppercase tracking-wider">Order Book</div>
               </div>
               <div className="flex-1 overflow-y-auto p-3 font-mono text-[11px]">
-                <div className="grid grid-cols-3 text-[#8B8EA8] mb-2 uppercase text-[10px] sticky top-0 bg-[#0C0D14] z-10">
+                <div className="grid grid-cols-3 text-[#8B8EA8] mb-2 uppercase text-[10px]">
                     <span>Price</span>
                     <span className="text-right">Size</span>
                     <span className="text-right">Total</span>
@@ -137,7 +137,7 @@ const TradePage = () => {
                 <div className="text-xs font-bold text-[#8B8EA8] uppercase tracking-wider">Recent Trades</div>
               </div>
               <div className="flex-1 overflow-y-auto p-3 font-mono text-[11px]">
-                <div className="grid grid-cols-3 text-[#8B8EA8] mb-2 uppercase text-[10px] sticky top-0 bg-[#0C0D14] z-10">
+                <div className="grid grid-cols-3 text-[#8B8EA8] mb-2 uppercase text-[10px]">
                     <span>Price</span>
                     <span className="text-right">Size</span>
                     <span className="text-right">Time</span>
