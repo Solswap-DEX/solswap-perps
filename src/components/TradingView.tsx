@@ -79,13 +79,13 @@ export const TradingView: React.FC<TradingViewProps> = ({ pool, timeframe }) => 
   }, [candles]);
 
   return (
-    <div className="relative w-full h-full min-h-0">
+    <div className="absolute inset-0">
       {isLoading && candles.length === 0 && (
         <div className="absolute inset-0 flex items-center justify-center bg-[#0C0D14]/50 z-10">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#00D1CF]"></div>
         </div>
       )}
-      <div ref={chartContainerRef} className="w-full h-full" />
+      <div ref={chartContainerRef} className="absolute inset-0" />
     </div>
   );
 };
