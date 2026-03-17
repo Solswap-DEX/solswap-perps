@@ -27,7 +27,7 @@ export const useMarketPrices = (mints: string[]) => {
 
   useEffect(() => {
     fetchPrices();
-    const interval = setInterval(fetchPrices, 15000);
+    const interval = setInterval(fetchPrices, 60000);
     return () => clearInterval(interval);
   }, [fetchPrices]);
 
