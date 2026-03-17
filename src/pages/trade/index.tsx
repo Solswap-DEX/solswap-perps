@@ -7,43 +7,14 @@ import { PositionsTable } from '@/components/PositionsTable';
 import { PERP_MARKETS } from '@/config/markets';
 import { useTradingStore } from '@/store/tradingStore';
 import { useMarketData } from '@/hooks/useMarketData';
+import { useOrderBook } from '@/hooks/useOrderBook';
 
 const TradePage = () => {
   const { selectedMarket } = useTradingStore();
   const [timeframe, setTimeframe] = useState('1h');
   const currentMarket = PERP_MARKETS.find(m => m.symbol === selectedMarket) || PERP_MARKETS[0];
   const { currentPrice } = useMarketData(currentMarket.geckoPool, timeframe);
-
-  const [orderBook, setOrderBook] = useState<{ asks: any[], bids: any[] }>({ asks: [], bids: [] });
-
-  useEffect(() => {
-    if (!currentPrice) return;
-    const generateOrderBook = (basePrice: number) => {
-      const precision = basePrice > 1000 ? 1 : 2;
-      const asks = Array.from({length: 12}, (_, i) => {
-        const price = basePrice * (1 + (i + 1) * 0.0005 + Math.random() * 0.0002);
-        return {
-          price: price.toFixed(precision),
-          size: (Math.random() * (20 / (i + 1)) + 0.1).toFixed(precision === 1 ? 2 : 1),
-          total: (Math.random() * 5000 + 500).toFixed(0),
-        };
-      });
-      const bids = Array.from({length: 12}, (_, i) => {
-        const price = basePrice * (1 - (i + 1) * 0.0005 - Math.random() * 0.0002);
-        return {
-          price: price.toFixed(precision),
-          size: (Math.random() * (20 / (i + 1)) + 0.1).toFixed(precision === 1 ? 2 : 1),
-          total: (Math.random() * 5000 + 500).toFixed(0),
-        };
-      });
-      return { asks: asks.reverse(), bids };
-    };
-    setOrderBook(generateOrderBook(currentPrice));
-    const interval = setInterval(() => {
-      setOrderBook(generateOrderBook(currentPrice));
-    }, 2500);
-    return () => clearInterval(interval);
-  }, [currentPrice]);
+  const { orderBook } = useOrderBook();
 
   const [trades, setTrades] = useState<any[]>([]);
 
@@ -108,7 +79,7 @@ const TradePage = () => {
                 <div className="text-xs font-bold text-[#8B8EA8] uppercase tracking-wider">Order Book</div>
               </div>
               <div className="flex-1 overflow-y-auto p-3 font-mono text-[11px]">
-                <div className="grid grid-cols-3 text-[#8B8EA8] mb-2 uppercase text-[10px]">
+                <div className="grid grid-cols-3 text-[#8B8EA8] mb-2 uppercase text-[10px] sticky top-0 bg-[#0C0D14] z-10">
                     <span>Price</span>
                     <span className="text-right">Size</span>
                     <span className="text-right">Total</span>
