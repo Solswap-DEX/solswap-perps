@@ -4,14 +4,19 @@ import { MarketSelector } from '@/components/MarketSelector';
 import { TradingView } from '@/components/TradingView';
 import { OrderForm } from '@/components/OrderForm';
 import { PositionsTable } from '@/components/PositionsTable';
+import { OpenOrdersTable } from '@/components/OpenOrdersTable';
+import { TradeHistoryTable } from '@/components/TradeHistoryTable';
 import { PERP_MARKETS } from '@/config/markets';
 import { useTradingStore } from '@/store/tradingStore';
 import { useMarketData } from '@/hooks/useMarketData';
 import { useOrderBook } from '@/hooks/useOrderBook';
 
+type FooterTab = 'positions' | 'openOrders' | 'tradeHistory';
+
 const TradePage = () => {
   const { selectedMarket } = useTradingStore();
   const [timeframe, setTimeframe] = useState('1h');
+  const [footerTab, setFooterTab] = useState<FooterTab>('positions');
   const currentMarket = PERP_MARKETS.find(m => m.symbol === selectedMarket) || PERP_MARKETS[0];
   const { currentPrice } = useMarketData(currentMarket.geckoPool, timeframe);
   const { orderBook } = useOrderBook(currentPrice ?? null);
@@ -152,12 +157,41 @@ const TradePage = () => {
       </main>
       <footer className="h-[200px] border-t border-[#1A1B2E] bg-[#0C0D14] flex flex-col flex-shrink-0">
         <div className="flex gap-8 border-b border-[#1A1B2E] px-6 flex-shrink-0">
-          <button className="text-[#00D1CF] border-b-2 border-[#00D1CF] py-3 font-bold text-xs uppercase tracking-widest whitespace-nowrap">Positions</button>
-          <button className="text-[#8B8EA8] py-3 font-bold text-xs uppercase tracking-widest hover:text-white transition-colors whitespace-nowrap">Open Orders</button>
-          <button className="text-[#8B8EA8] py-3 font-bold text-xs uppercase tracking-widest hover:text-white transition-colors whitespace-nowrap">Trade History</button>
+          <button
+            onClick={() => setFooterTab('positions')}
+            className={`py-3 font-bold text-xs uppercase tracking-widest whitespace-nowrap ${
+              footerTab === 'positions'
+                ? 'text-[#00D1CF] border-b-2 border-[#00D1CF]'
+                : 'text-[#8B8EA8] hover:text-white transition-colors'
+            }`}
+          >
+            Positions
+          </button>
+          <button
+            onClick={() => setFooterTab('openOrders')}
+            className={`py-3 font-bold text-xs uppercase tracking-widest whitespace-nowrap ${
+              footerTab === 'openOrders'
+                ? 'text-[#00D1CF] border-b-2 border-[#00D1CF]'
+                : 'text-[#8B8EA8] hover:text-white transition-colors'
+            }`}
+          >
+            Open Orders
+          </button>
+          <button
+            onClick={() => setFooterTab('tradeHistory')}
+            className={`py-3 font-bold text-xs uppercase tracking-widest whitespace-nowrap ${
+              footerTab === 'tradeHistory'
+                ? 'text-[#00D1CF] border-b-2 border-[#00D1CF]'
+                : 'text-[#8B8EA8] hover:text-white transition-colors'
+            }`}
+          >
+            Trade History
+          </button>
         </div>
         <div className="flex-1 overflow-y-auto bg-[#08090F]">
-          <PositionsTable />
+          {footerTab === 'positions' && <PositionsTable />}
+          {footerTab === 'openOrders' && <OpenOrdersTable />}
+          {footerTab === 'tradeHistory' && <TradeHistoryTable />}
         </div>
       </footer>
     </div>
