@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 export const useMarketPrices = (mints: string[]) => {
   const [prices, setPrices] = useState<Record<string, number>>({});
   const [isLoading, setIsLoading] = useState(true);
 
-const fetchPrices = async () => {
+  const fetchPrices = useCallback(async () => {
     try {
       const url = `https://api.geckoterminal.com/api/v2/simple/networks/solana/token_price/${mints.join(',')}`;
       const response = await fetch(url);
@@ -23,13 +23,13 @@ const fetchPrices = async () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [mints]);
 
   useEffect(() => {
     fetchPrices();
-    const interval = setInterval(fetchPrices, 15000); // 15s for simple prices
+    const interval = setInterval(fetchPrices, 15000);
     return () => clearInterval(interval);
-  }, [mints.join(',')]);
+  }, [fetchPrices]);
 
   return { prices, isLoading };
 };

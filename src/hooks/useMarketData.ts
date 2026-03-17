@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 export type Candle = {
   time: number;
@@ -25,7 +25,7 @@ export const useMarketData = (pool: string, timeframe: string = '1h') => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       const tf = TIMEFRAME_MAP[timeframe] || TIMEFRAME_MAP['1h'];
       const url = `https://api.geckoterminal.com/api/v2/networks/solana/pools/${pool}/ohlcv/${tf.type}?aggregate=${tf.aggregate}&limit=300`;
@@ -68,7 +68,7 @@ export const useMarketData = (pool: string, timeframe: string = '1h') => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [pool, timeframe]);
 
   useEffect(() => {
     setIsLoading(true);
@@ -76,7 +76,7 @@ export const useMarketData = (pool: string, timeframe: string = '1h') => {
     fetchData();
     const interval = setInterval(fetchData, 30000);
     return () => clearInterval(interval);
-  }, [pool, timeframe]);
+  }, [fetchData]);
 
   return { candles, currentPrice, priceChange24h, isLoading, error };
 };

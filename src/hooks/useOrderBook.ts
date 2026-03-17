@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useDriftClient } from './useDriftClient';
 import { PERP_MARKETS } from '@/config/markets';
 import { useTradingStore } from '@/store/tradingStore';
@@ -20,40 +20,59 @@ export const useOrderBook = () => {
   
   const [orderBook, setOrderBook] = useState<OrderBookData>({ asks: [], bids: [] });
   const [isLoading, setIsLoading] = useState(true);
+  const marketIndexRef = useRef(0);
 
   const currentMarketConfig = PERP_MARKETS.find(m => m.symbol === selectedMarket) || PERP_MARKETS[0];
   const marketIndex = currentMarketConfig.marketIndex;
+  marketIndexRef.current = marketIndex;
 
   const fetchOrderBook = useCallback(async () => {
     if (!driftClient || !isConnected) return;
 
     try {
-      const oraclePrice = await driftClient.getOraclePriceData(marketIndex);
-      if (!oraclePrice) return;
+      const sdk = driftClient as any;
+      
+      // Get the perp market
+      const perpMarket = sdk.perpMarkets?.get(marketIndexRef.current);
+      if (!perpMarket) return;
 
-      const currentPrice = Number(oraclePrice.price) / 1e6;
+      // Get oracle price
+      let currentPrice = 0;
+      try {
+        const oracle = await sdk.getOraclePriceDataForPerp(marketIndexRef.current);
+        if (oracle) {
+          currentPrice = Number(oracle.price) / 1e6;
+        }
+      } catch (e) {
+        // If oracle fails, try to get from order book
+      }
+      
       const precision = currentPrice > 1000 ? 1 : 2;
 
-      const perpMarkets = (driftClient as any).perpMarkets;
-      const market = perpMarkets?.get(marketIndex);
+      const bids: OrderBookEntry[] = [];
+      const asks: OrderBookEntry[] = [];
       
-      if (!market) return;
+      // Get order book from Drift SDK
+      let orderBookData = null;
+      try {
+        orderBookData = sdk.getPerpOrderBook(marketIndexRef.current);
+      } catch (e) {
+        console.error('Failed to get order book:', e);
+        return;
+      }
+      
+      if (!orderBookData) return;
 
-      const bids = [];
-      const asks = [];
-      
-      // Get order book data from Drift
-      const orderBookData = (driftClient as any).getPerpOrderBook(marketIndex);
-      
       // Process asks (sells) - sorted from lowest to highest
-      const sortedAsks = [...(orderBookData.asks || [])]
-        .sort((a, b) => Number(a.price) - Number(b.price))
+      const rawAsks = orderBookData.asks || [];
+      const sortedAsks = [...rawAsks]
+        .sort((a: any, b: any) => Number(a.price) - Number(b.price))
         .slice(0, 15);
       
       let cumulativeTotal = 0;
       for (const order of sortedAsks) {
         const price = Number(order.price) / 1e6;
-        const size = Number(order.baseQuantity) / 1e6;
+        const size = Number(order.baseQuantity || order.quantity || 0) / 1e6;
         cumulativeTotal += price * size;
         
         asks.push({
@@ -64,14 +83,15 @@ export const useOrderBook = () => {
       }
 
       // Process bids (buys) - sorted from highest to lowest
-      const sortedBids = [...(orderBookData.bids || [])]
-        .sort((a, b) => Number(b.price) - Number(a.price))
+      const rawBids = orderBookData.bids || [];
+      const sortedBids = [...rawBids]
+        .sort((a: any, b: any) => Number(b.price) - Number(a.price))
         .slice(0, 15);
       
       cumulativeTotal = 0;
       for (const order of sortedBids) {
         const price = Number(order.price) / 1e6;
-        const size = Number(order.baseQuantity) / 1e6;
+        const size = Number(order.baseQuantity || order.quantity || 0) / 1e6;
         cumulativeTotal += price * size;
         
         bids.push({
@@ -90,7 +110,7 @@ export const useOrderBook = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [driftClient, isConnected, marketIndex]);
+  }, [driftClient, isConnected]);
 
   useEffect(() => {
     if (!driftClient || !isConnected) {
@@ -100,7 +120,6 @@ export const useOrderBook = () => {
 
     fetchOrderBook();
     
-    // Subscribe to order book updates
     const interval = setInterval(fetchOrderBook, 1000);
     
     return () => clearInterval(interval);
@@ -109,6 +128,5 @@ export const useOrderBook = () => {
   return {
     orderBook,
     isLoading,
-    currentPrice: null, // Will be fetched from useMarketData
   };
 };
