@@ -14,7 +14,7 @@ const TradePage = () => {
   const [timeframe, setTimeframe] = useState('1h');
   const currentMarket = PERP_MARKETS.find(m => m.symbol === selectedMarket) || PERP_MARKETS[0];
   const { currentPrice } = useMarketData(currentMarket.geckoPool, timeframe);
-  const { orderBook } = useOrderBook(currentPrice);
+  const { orderBook } = useOrderBook();
 
   const [trades, setTrades] = useState<any[]>([]);
 

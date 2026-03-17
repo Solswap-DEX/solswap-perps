@@ -14,7 +14,7 @@ export interface OrderBookData {
   bids: OrderBookEntry[];
 }
 
-export const useOrderBook = (basePrice: number | null = null) => {
+export const useOrderBook = () => {
   const { driftClient, isConnected } = useDriftClient();
   const { selectedMarket } = useTradingStore();
   
@@ -26,51 +26,7 @@ export const useOrderBook = (basePrice: number | null = null) => {
   const marketIndex = currentMarketConfig.marketIndex;
   marketIndexRef.current = marketIndex;
 
-  const generateMockOrderBook = useCallback((price: number): OrderBookData => {
-    const precision = price > 1000 ? 1 : 2;
-    const bids: OrderBookEntry[] = [];
-    const asks: OrderBookEntry[] = [];
-    
-    // Generate 15 asks (above current price)
-    let cumulativeAskTotal = 0;
-    for (let i = 1; i <= 15; i++) {
-      const p = price + (i * (price * 0.0005));
-      const s = Math.random() * 5 + 0.1;
-      cumulativeAskTotal += p * s;
-      asks.push({
-        price: p.toFixed(precision),
-        size: s.toFixed(3),
-        total: cumulativeAskTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
-      });
-    }
-
-    // Generate 15 bids (below current price)
-    let cumulativeBidTotal = 0;
-    for (let i = 1; i <= 15; i++) {
-      const p = price - (i * (price * 0.0005));
-      const s = Math.random() * 5 + 0.1;
-      cumulativeBidTotal += p * s;
-      bids.push({
-        price: p.toFixed(precision),
-        size: s.toFixed(3),
-        total: cumulativeBidTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
-      });
-    }
-
-    return { 
-      asks: asks.reverse(), // Sort asks ascending in the UI (highest at top)
-      bids 
-    };
-  }, []);
-
   const fetchOrderBook = useCallback(async () => {
-    // If we have a base price, we can show mock data immediately if drift isn't ready
-    if ((!driftClient || !isConnected) && basePrice) {
-      setOrderBook(generateMockOrderBook(basePrice));
-      setIsLoading(false);
-      return;
-    }
-
     if (!driftClient || !isConnected) return;
 
     try {
@@ -78,10 +34,6 @@ export const useOrderBook = (basePrice: number | null = null) => {
       
       // Get the perp market
       const perpMarket = sdk.perpMarkets?.get(marketIndexRef.current);
-      if (!perpMarket && basePrice) {
-        setOrderBook(generateMockOrderBook(basePrice));
-        return;
-      }
       if (!perpMarket) return;
 
       // Get oracle price
@@ -106,14 +58,10 @@ export const useOrderBook = (basePrice: number | null = null) => {
         orderBookData = sdk.getPerpOrderBook(marketIndexRef.current);
       } catch (e) {
         console.error('Failed to get order book:', e);
-        if (basePrice) setOrderBook(generateMockOrderBook(basePrice));
         return;
       }
       
-      if (!orderBookData || (orderBookData.asks.length === 0 && orderBookData.bids.length === 0)) {
-        if (basePrice) setOrderBook(generateMockOrderBook(basePrice));
-        return;
-      }
+      if (!orderBookData) return;
 
       // Process asks (sells) - sorted from lowest to highest
       const rawAsks = orderBookData.asks || [];
@@ -130,7 +78,7 @@ export const useOrderBook = (basePrice: number | null = null) => {
         asks.push({
           price: price.toFixed(precision),
           size: size.toFixed(precision === 1 ? 3 : 4),
-          total: cumulativeTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+          total: cumulativeTotal.toFixed(2),
         });
       }
 
@@ -149,7 +97,7 @@ export const useOrderBook = (basePrice: number | null = null) => {
         bids.push({
           price: price.toFixed(precision),
           size: size.toFixed(precision === 1 ? 3 : 4),
-          total: cumulativeTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+          total: cumulativeTotal.toFixed(2),
         });
       }
 
@@ -159,27 +107,23 @@ export const useOrderBook = (basePrice: number | null = null) => {
       });
     } catch (err) {
       console.error('OrderBook fetch error:', err);
-      if (basePrice) setOrderBook(generateMockOrderBook(basePrice));
     } finally {
       setIsLoading(false);
     }
-  }, [driftClient, isConnected, basePrice, generateMockOrderBook]);
+  }, [driftClient, isConnected]);
 
   useEffect(() => {
     if (!driftClient || !isConnected) {
-      if (basePrice) {
-        setOrderBook(generateMockOrderBook(basePrice));
-        setIsLoading(false);
-      } else {
-        setIsLoading(true);
-      }
+      setIsLoading(true);
       return;
     }
 
     fetchOrderBook();
+    
     const interval = setInterval(fetchOrderBook, 1000);
+    
     return () => clearInterval(interval);
-  }, [driftClient, isConnected, fetchOrderBook, basePrice, generateMockOrderBook]);
+  }, [driftClient, isConnected, fetchOrderBook]);
 
   return {
     orderBook,
