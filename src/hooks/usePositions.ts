@@ -12,6 +12,10 @@ export const usePositions = () => {
 
     const fetchPositions = async () => {
       try {
+        if (!driftClient.hasUser()) {
+          setIsLoading(false);
+          return;
+        }
         const user = driftClient.getUser();
         const activePositions = user.getActivePerpPositions();
         

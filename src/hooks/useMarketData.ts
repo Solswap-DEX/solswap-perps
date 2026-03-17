@@ -52,6 +52,7 @@ export const useMarketData = (pool: string, timeframe: string = '1h') => {
           close: parseFloat(item[4]),
           volume: parseFloat(item[5]),
         }))
+        .filter((c: any) => c.open != null && c.high != null && c.low != null && c.close != null)
         .sort((a: any, b: any) => a.time - b.time);
 
       setCandles(formattedCandles);
