@@ -1,10 +1,20 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
+
+const WalletMultiButton = dynamic(
+  () => import('@solana/wallet-adapter-react-ui').then((m) => m.WalletMultiButton),
+  { ssr: false }
+);
 
 export const Header = () => {
   const { connected, publicKey } = useWallet();
+  const [hasMounted, setHasMounted] = useState(false);
+
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
 
   return (
     <header className="h-16 border-b border-[#1A1B2E] bg-[#0C0D14] flex items-center justify-between px-6 sticky top-0 z-50">
@@ -25,13 +35,19 @@ export const Header = () => {
       </div>
 
       <div className="flex items-center gap-4">
-        {connected && (
+        {hasMounted && connected && (
           <div className="flex flex-col items-end mr-2">
             <span className="text-[10px] text-[#8B8EA8] uppercase font-bold">Mainnet</span>
             <span className="text-xs text-white">connected</span>
           </div>
         )}
-        <WalletMultiButton className="!bg-[#1A1B2E] !h-10 !rounded-lg !text-sm !font-bold hover:!opacity-80 transition-opacity" />
+        {hasMounted ? (
+          <WalletMultiButton className="!bg-[#1A1B2E] !h-10 !rounded-lg !text-sm !font-bold hover:!opacity-80 transition-opacity" />
+        ) : (
+          <button className="bg-[#1A1B2E] h-10 rounded-lg px-4 text-sm font-bold text-white opacity-80">
+            Select Wallet
+          </button>
+        )}
       </div>
     </header>
   );
