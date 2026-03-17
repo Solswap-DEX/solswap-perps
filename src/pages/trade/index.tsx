@@ -5,13 +5,15 @@ import { TradingView } from '@/components/TradingView';
 import { OrderForm } from '@/components/OrderForm';
 import { PositionsTable } from '@/components/PositionsTable';
 import { OpenOrdersTable } from '@/components/OpenOrdersTable';
-import { TradeHistoryTable } from '@/components/TradeHistoryTable';
+import { FillsTable } from '@/components/FillsTable';
+import { AssetsPanel } from '@/components/AssetsPanel';
+import { LiquidationPanel } from '@/components/LiquidationPanel';
 import { PERP_MARKETS } from '@/config/markets';
 import { useTradingStore } from '@/store/tradingStore';
 import { useMarketData } from '@/hooks/useMarketData';
 import { useOrderBook } from '@/hooks/useOrderBook';
 
-type FooterTab = 'positions' | 'openOrders' | 'tradeHistory';
+type FooterTab = 'positions' | 'orders' | 'fills' | 'assets' | 'liquidation';
 
 const TradePage = () => {
   const { selectedMarket } = useTradingStore();
@@ -156,7 +158,7 @@ const TradePage = () => {
         </div>
       </main>
       <footer className="h-[200px] border-t border-[#1A1B2E] bg-[#0C0D14] flex flex-col flex-shrink-0">
-        <div className="flex gap-8 border-b border-[#1A1B2E] px-6 flex-shrink-0">
+        <div className="flex gap-8 border-b border-[#1A1B2E] px-6 flex-shrink-0 overflow-x-auto no-scrollbar">
           <button
             onClick={() => setFooterTab('positions')}
             className={`py-3 font-bold text-xs uppercase tracking-widest whitespace-nowrap ${
@@ -168,30 +170,52 @@ const TradePage = () => {
             Positions
           </button>
           <button
-            onClick={() => setFooterTab('openOrders')}
+            onClick={() => setFooterTab('orders')}
             className={`py-3 font-bold text-xs uppercase tracking-widest whitespace-nowrap ${
-              footerTab === 'openOrders'
+              footerTab === 'orders'
                 ? 'text-[#00D1CF] border-b-2 border-[#00D1CF]'
                 : 'text-[#8B8EA8] hover:text-white transition-colors'
             }`}
           >
-            Open Orders
+            Orders
           </button>
           <button
-            onClick={() => setFooterTab('tradeHistory')}
+            onClick={() => setFooterTab('fills')}
             className={`py-3 font-bold text-xs uppercase tracking-widest whitespace-nowrap ${
-              footerTab === 'tradeHistory'
+              footerTab === 'fills'
                 ? 'text-[#00D1CF] border-b-2 border-[#00D1CF]'
                 : 'text-[#8B8EA8] hover:text-white transition-colors'
             }`}
           >
-            Trade History
+            Fills
+          </button>
+          <button
+            onClick={() => setFooterTab('assets')}
+            className={`py-3 font-bold text-xs uppercase tracking-widest whitespace-nowrap ${
+              footerTab === 'assets'
+                ? 'text-[#00D1CF] border-b-2 border-[#00D1CF]'
+                : 'text-[#8B8EA8] hover:text-white transition-colors'
+            }`}
+          >
+            Assets
+          </button>
+          <button
+            onClick={() => setFooterTab('liquidation')}
+            className={`py-3 font-bold text-xs uppercase tracking-widest whitespace-nowrap ${
+              footerTab === 'liquidation'
+                ? 'text-[#00D1CF] border-b-2 border-[#00D1CF]'
+                : 'text-[#8B8EA8] hover:text-white transition-colors'
+            }`}
+          >
+            Liquidation
           </button>
         </div>
         <div className="flex-1 overflow-y-auto bg-[#08090F]">
           {footerTab === 'positions' && <PositionsTable />}
-          {footerTab === 'openOrders' && <OpenOrdersTable />}
-          {footerTab === 'tradeHistory' && <TradeHistoryTable />}
+          {footerTab === 'orders' && <OpenOrdersTable />}
+          {footerTab === 'fills' && <FillsTable />}
+          {footerTab === 'assets' && <AssetsPanel />}
+          {footerTab === 'liquidation' && <LiquidationPanel />}
         </div>
       </footer>
     </div>
