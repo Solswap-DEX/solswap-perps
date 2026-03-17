@@ -6,7 +6,7 @@ export const useMarketPrices = (mints: string[]) => {
 
   const fetchPrices = useCallback(async () => {
     try {
-      const url = `https://api.geckoterminal.com/api/v2/simple/networks/solana/token_price/${mints.join(',')}`;
+      const url = `/api/prices?mints=${mints.join(',')}`;
       const response = await fetch(url);
       const json = await response.json();
       

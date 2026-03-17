@@ -28,13 +28,11 @@ export const useMarketData = (pool: string, timeframe: string = '1h') => {
   const fetchData = useCallback(async () => {
     try {
       const tf = TIMEFRAME_MAP[timeframe] || TIMEFRAME_MAP['1h'];
-      const url = `https://api.geckoterminal.com/api/v2/networks/solana/pools/${pool}/ohlcv/${tf.type}?aggregate=${tf.aggregate}&limit=300`;
+      const url = `/api/ohlcv?pool=${pool}&timeframe=${tf.type}&aggregate=${tf.aggregate}&limit=300`;
 
-      const response = await fetch(url, {
-        headers: { 'Accept': 'application/json' }
-      });
+      const response = await fetch(url);
 
-      if (!response.ok) throw new Error(`GeckoTerminal error: ${response.status}`);
+      if (!response.ok) throw new Error(`OHLCV API error: ${response.status}`);
 
       const json = await response.json();
       const ohlcvData = json?.data?.attributes?.ohlcv_list;
