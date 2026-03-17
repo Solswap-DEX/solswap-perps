@@ -8,7 +8,12 @@ export const usePositions = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (!driftClient || !isConnected) return;
+    if (!driftClient || !isConnected) {
+      setPositions([]);
+      setTotalPnL(0);
+      setIsLoading(false);
+      return;
+    }
 
     const fetchPositions = async () => {
       try {
