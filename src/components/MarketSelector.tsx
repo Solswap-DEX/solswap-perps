@@ -29,8 +29,8 @@ const MarketTab = ({ market, isActive, onClick, currentPrice }: { market: any, i
 
 export const MarketSelector = () => {
   const { selectedMarket, setSelectedMarket } = useTradingStore();
-  const mints = useMemo(() => PERP_MARKETS.map(m => m.mint), []);
-  const { prices } = useMarketPrices(mints);
+  const poolIds = useMemo(() => PERP_MARKETS.map(m => m.geckoPool), []);
+  const { prices } = useMarketPrices(poolIds);
 
   return (
     <div className="flex items-center gap-3 p-4 border-b border-[#1A1B2E] bg-[#0C0D14] overflow-x-auto no-scrollbar">
@@ -40,7 +40,7 @@ export const MarketSelector = () => {
           market={market}
           isActive={selectedMarket === market.symbol}
           onClick={() => setSelectedMarket(market.symbol)}
-          currentPrice={prices[market.mint]}
+          currentPrice={prices[market.geckoPool]}
         />
       ))}
     </div>

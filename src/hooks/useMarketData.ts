@@ -43,22 +43,40 @@ export const useMarketData = (pool: string, timeframe: string = '1h') => {
 
       const formattedCandles: Candle[] = ohlcvData
         .map((item: any) => ({
-          time: item[0],
+          time: Number(item[0]),
           open: parseFloat(item[1]),
           high: parseFloat(item[2]),
           low: parseFloat(item[3]),
           close: parseFloat(item[4]),
           volume: parseFloat(item[5]),
         }))
-        .filter((c: any) => c.open != null && c.high != null && c.low != null && c.close != null)
+        .filter((c: any) => 
+          !isNaN(c.time) && 
+          !isNaN(c.open) && 
+          !isNaN(c.high) && 
+          !isNaN(c.low) && 
+          !isNaN(c.close)
+        )
         .sort((a: any, b: any) => a.time - b.time);
 
-      setCandles(formattedCandles);
-      const lastCandle = formattedCandles[formattedCandles.length - 1];
-      setCurrentPrice(lastCandle.close);
-      const firstCandle = formattedCandles[0];
-      const change = ((lastCandle.close - firstCandle.open) / firstCandle.open) * 100;
-      setPriceChange24h(change);
+      // Remove duplicate timestamps which cause lightweight-charts to crash
+      const uniqueCandles: Candle[] = [];
+      const seenTimes = new Set<number>();
+      for (const candle of formattedCandles) {
+        if (!seenTimes.has(candle.time)) {
+          uniqueCandles.push(candle);
+          seenTimes.add(candle.time);
+        }
+      }
+
+      setCandles(uniqueCandles);
+      const lastCandle = uniqueCandles[uniqueCandles.length - 1];
+      if (lastCandle) {
+        setCurrentPrice(lastCandle.close);
+        const firstCandle = uniqueCandles[0];
+        const change = ((lastCandle.close - firstCandle.open) / firstCandle.open) * 100;
+        setPriceChange24h(change);
+      }
       setError(null);
     } catch (err: any) {
       console.error('useMarketData error:', err.message);
