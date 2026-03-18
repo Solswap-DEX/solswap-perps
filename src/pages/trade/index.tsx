@@ -60,6 +60,8 @@ const TradePage = () => {
              <OrderForm />
            </div>
         </div>
+        
+        {/* Main Content Area: Chart + Sidebar */}
         <div className="flex-1 flex flex-col border-r border-[#1A1B2E] overflow-hidden min-h-0">
           <div className="flex justify-between items-center bg-[#0C0D14] flex-shrink-0">
             <MarketSelector />
@@ -77,63 +79,74 @@ const TradePage = () => {
               ))}
             </div>
           </div>
-          <div className="flex-1 min-h-0 relative">
-            <TradingView pool={currentMarket.geckoPool} timeframe={timeframe} />
-          </div>
-          <div className="flex flex-row h-[260px] border-t border-[#1A1B2E] flex-shrink-0">
-            <div className="flex-1 border-r border-[#1A1B2E] flex flex-col overflow-hidden">
-              <div className="p-3 border-b border-[#1A1B2E] flex-shrink-0">
-                <div className="text-xs font-bold text-[#8B8EA8] uppercase tracking-wider">Order Book</div>
-              </div>
-              <div className="flex-1 overflow-y-auto no-scrollbar p-3 font-mono text-[11px]">
-                <div className="grid grid-cols-3 text-[#8B8EA8] mb-2 uppercase text-[10px] sticky top-0 bg-[#0C0D14] z-10">
-                    <span>Price (USDC)</span>
-                    <span className="text-right">Size ({currentMarket.baseAsset})</span>
-                    <span className="text-right">Total (USDC)</span>
-                </div>
-                {orderBook.asks.map((ask, i) => (
-                    <div key={`ask-${i}`} className="grid grid-cols-3 text-[#FF4D6A] py-0.5">
-                        <span>{ask.price}</span>
-                        <span className="text-right text-[#8B8EA8]">{ask.size}</span>
-                        <span className="text-right text-[#8B8EA8]">${ask.total}</span>
-                    </div>
-                ))}
-                <div className="my-1 py-1 border-y border-[#1A1B2E] text-center text-base font-bold text-[#00D1CF]">
-                    ${currentPrice?.toLocaleString() || '---'}
-                </div>
-                {orderBook.bids.map((bid, i) => (
-                    <div key={`bid-${i}`} className="grid grid-cols-3 text-[#00C896] py-0.5">
-                        <span>{bid.price}</span>
-                        <span className="text-right text-[#8B8EA8]">{bid.size}</span>
-                        <span className="text-right text-[#8B8EA8]">${bid.total}</span>
-                    </div>
-                ))}
-              </div>
+          
+          <div className="flex-1 flex flex-row overflow-hidden min-h-0">
+            {/* Chart Area */}
+            <div className="flex-1 relative border-r border-[#1A1B2E] min-w-0">
+              <TradingView pool={currentMarket.geckoPool} timeframe={timeframe} />
             </div>
-            <div className="flex-1 flex flex-col overflow-hidden">
-              <div className="p-3 border-b border-[#1A1B2E] flex-shrink-0">
-                <div className="text-xs font-bold text-[#8B8EA8] uppercase tracking-wider">Recent Trades</div>
-              </div>
-              <div className="flex-1 overflow-y-auto no-scrollbar p-3 font-mono text-[11px]">
-                <div className="grid grid-cols-3 text-[#8B8EA8] mb-2 uppercase text-[10px]">
-                    <span>Price (USDC)</span>
-                    <span className="text-right">Size ({currentMarket.baseAsset})</span>
-                    <span className="text-right">Time</span>
+
+            {/* Order Book & Trades Strip (Vertical Sidebar) */}
+            <div className="w-[300px] flex flex-col overflow-hidden bg-[#0C0D14] flex-shrink-0">
+              {/* Order Book Section */}
+              <div className="flex-[3] flex flex-col overflow-hidden border-b border-[#1A1B2E]">
+                <div className="p-3 bg-[#0C0D14] border-b border-[#1A1B2E] flex-shrink-0">
+                  <div className="text-[10px] font-bold text-[#8B8EA8] uppercase tracking-wider">Order Book</div>
                 </div>
-                {trades.map(trade => (
-                    <div key={trade.id} className="grid grid-cols-3 py-1">
-                        <span className={trade.side === 'BUY' ? 'text-[#00C896]' : 'text-[#FF4D6A]'}>
-                            {trade.price}
-                        </span>
-                        <span className="text-right text-[#8B8EA8]">{trade.size}</span>
-                        <span className="text-right text-[#8B8EA8]">{trade.time}</span>
-                    </div>
-                ))}
+                <div className="flex-1 overflow-y-auto no-scrollbar p-3 font-mono text-[10px]">
+                  <div className="grid grid-cols-3 text-[#525465] mb-2 uppercase text-[9px] sticky top-0 bg-[#0C0D14] py-1 z-10 border-b border-[#1A1B2E]/50">
+                      <span>Price (USDC)</span>
+                      <span className="text-right">Size ({currentMarket.baseAsset})</span>
+                      <span className="text-right">Total</span>
+                  </div>
+                  {orderBook.asks.map((ask, i) => (
+                      <div key={`ask-${i}`} className="grid grid-cols-3 text-[#FF4D6A] py-0.5 hover:bg-[#FF4D6A]/5 transition-colors">
+                          <span>{ask.price}</span>
+                          <span className="text-right text-[#8B8EA8]">{ask.size}</span>
+                          <span className="text-right text-[#525465]">${ask.total.split('.')[0]}</span>
+                      </div>
+                  ))}
+                  <div className="my-2 py-2 border-y border-[#1A1B2E]/50 text-center text-sm font-bold text-[#00D1CF] bg-[#00D1CF]/5">
+                      ${currentPrice?.toLocaleString() || '---'}
+                  </div>
+                  {orderBook.bids.map((bid, i) => (
+                      <div key={`bid-${i}`} className="grid grid-cols-3 text-[#00C896] py-0.5 hover:bg-[#00C896]/5 transition-colors">
+                          <span>{bid.price}</span>
+                          <span className="text-right text-[#8B8EA8]">{bid.size}</span>
+                          <span className="text-right text-[#525465]">${bid.total.split('.')[0]}</span>
+                      </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Recent Trades Section */}
+              <div className="flex-[2] flex flex-col overflow-hidden">
+                <div className="p-3 bg-[#0C0D14] border-b border-[#1A1B2E] flex-shrink-0">
+                  <div className="text-[10px] font-bold text-[#8B8EA8] uppercase tracking-wider">Recent Trades</div>
+                </div>
+                <div className="flex-1 overflow-y-auto no-scrollbar p-3 font-mono text-[10px]">
+                  <div className="grid grid-cols-3 text-[#525465] mb-2 uppercase text-[9px] border-b border-[#1A1B2E]/50 py-1">
+                      <span>Price (USDC)</span>
+                      <span className="text-right">Size ({currentMarket.baseAsset})</span>
+                      <span className="text-right">Time</span>
+                  </div>
+                  {trades.map(trade => (
+                      <div key={trade.id} className="grid grid-cols-3 py-1 hover:bg-[#1A1B2E]/30 transition-colors">
+                          <span className={trade.side === 'BUY' ? 'text-[#00C896]' : 'text-[#FF4D6A]'}>
+                              {trade.price}
+                          </span>
+                          <span className="text-right text-[#8B8EA8]">{trade.size}</span>
+                          <span className="text-right text-[#525465]">{trade.time.split(' ')[0]}</span>
+                      </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
         </div>
-        <div className="hidden lg:flex flex-col w-[380px] flex-shrink-0 p-4 border-l border-[#1A1B2E] bg-[#0C0D14] overflow-y-auto min-h-0">
+
+        {/* Zone B: Order Form (Desktop) */}
+        <div className="hidden lg:flex flex-col w-[350px] flex-shrink-0 p-4 border-l border-[#1A1B2E] bg-[#0C0D14] overflow-y-auto min-h-0">
           <div className="text-xs font-bold text-[#8B8EA8] mb-4 uppercase tracking-wider flex items-center gap-2 flex-shrink-0">
             <span className="w-2 h-2 rounded-full bg-[#00D1CF] animate-pulse"></span>
             Trade Execution
@@ -146,10 +159,6 @@ const TradePage = () => {
               <span className="text-[#8B8EA8]">Available Balance</span>
               <span className="text-white font-mono font-bold font-medium tracking-tight">0.00 USDC</span>
             </div>
-            <div className="flex justify-between text-xs">
-              <span className="text-[#8B8EA8]">Current Margin Usage</span>
-              <span className="text-white font-mono font-bold font-medium tracking-tight">0.00 USDC</span>
-            </div>
             <div className="flex justify-between text-xs pt-4 border-t border-[#1A1B2E]">
               <span className="text-[#8B8EA8]">Account Health</span>
               <span className="text-[#00C896] font-bold">100% SECURE</span>
@@ -157,58 +166,22 @@ const TradePage = () => {
           </div>
         </div>
       </main>
+
       <footer className="h-[200px] border-t border-[#1A1B2E] bg-[#0C0D14] flex flex-col flex-shrink-0">
         <div className="flex gap-8 border-b border-[#1A1B2E] px-6 flex-shrink-0 overflow-x-auto no-scrollbar">
-          <button
-            onClick={() => setFooterTab('positions')}
-            className={`py-3 font-bold text-xs uppercase tracking-widest whitespace-nowrap ${
-              footerTab === 'positions'
-                ? 'text-[#00D1CF] border-b-2 border-[#00D1CF]'
-                : 'text-[#8B8EA8] hover:text-white transition-colors'
-            }`}
-          >
-            Positions
-          </button>
-          <button
-            onClick={() => setFooterTab('orders')}
-            className={`py-3 font-bold text-xs uppercase tracking-widest whitespace-nowrap ${
-              footerTab === 'orders'
-                ? 'text-[#00D1CF] border-b-2 border-[#00D1CF]'
-                : 'text-[#8B8EA8] hover:text-white transition-colors'
-            }`}
-          >
-            Orders
-          </button>
-          <button
-            onClick={() => setFooterTab('fills')}
-            className={`py-3 font-bold text-xs uppercase tracking-widest whitespace-nowrap ${
-              footerTab === 'fills'
-                ? 'text-[#00D1CF] border-b-2 border-[#00D1CF]'
-                : 'text-[#8B8EA8] hover:text-white transition-colors'
-            }`}
-          >
-            Fills
-          </button>
-          <button
-            onClick={() => setFooterTab('assets')}
-            className={`py-3 font-bold text-xs uppercase tracking-widest whitespace-nowrap ${
-              footerTab === 'assets'
-                ? 'text-[#00D1CF] border-b-2 border-[#00D1CF]'
-                : 'text-[#8B8EA8] hover:text-white transition-colors'
-            }`}
-          >
-            Assets
-          </button>
-          <button
-            onClick={() => setFooterTab('liquidation')}
-            className={`py-3 font-bold text-xs uppercase tracking-widest whitespace-nowrap ${
-              footerTab === 'liquidation'
-                ? 'text-[#00D1CF] border-b-2 border-[#00D1CF]'
-                : 'text-[#8B8EA8] hover:text-white transition-colors'
-            }`}
-          >
-            Liquidation
-          </button>
+          {['positions', 'orders', 'fills', 'assets', 'liquidation'].map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setFooterTab(tab as FooterTab)}
+              className={`py-3 font-bold text-xs uppercase tracking-widest whitespace-nowrap transition-all ${
+                footerTab === tab
+                  ? 'text-[#00D1CF] border-b-2 border-[#00D1CF]'
+                  : 'text-[#8B8EA8] hover:text-white'
+              }`}
+            >
+              {tab}
+            </button>
+          ))}
         </div>
         <div className="flex-1 overflow-y-auto bg-[#08090F]">
           {footerTab === 'positions' && <PositionsTable />}
