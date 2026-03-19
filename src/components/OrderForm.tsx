@@ -25,12 +25,12 @@ export const OrderForm = () => {
   return (
     <div className="flex flex-col gap-6">
       {/* Long/Short Toggle */}
-      <div className="flex bg-[#0C0D14] p-1 rounded-lg">
+      <div className="flex bg-[#05070A] p-1 rounded-lg">
         <button
           onClick={() => setOrderSide('long')}
           className={`flex-1 py-2 rounded-md font-bold transition-all ${
             orderSide === 'long' 
-            ? 'bg-[#00C896] text-white shadow-lg shadow-[#00C896]/20' 
+            ? 'bg-[#00FFA3] text-[#05070A] shadow-lg shadow-[#00FFA3]/20' 
             : 'text-[#8B8EA8]'
           }`}
         >
@@ -40,7 +40,7 @@ export const OrderForm = () => {
           onClick={() => setOrderSide('short')}
           className={`flex-1 py-2 rounded-md font-bold transition-all ${
             orderSide === 'short' 
-            ? 'bg-[#FF4D6A] text-white shadow-lg shadow-[#FF4D6A]/20' 
+            ? 'bg-[#FF4D6D] text-white shadow-lg shadow-[#FF4D6D]/20' 
             : 'text-[#8B8EA8]'
           }`}
         >
@@ -52,13 +52,13 @@ export const OrderForm = () => {
       <div className="flex gap-4">
         <button 
           onClick={() => setOrderType('market')}
-          className={`text-sm font-bold ${orderType === 'market' ? 'text-[#00D1CF]' : 'text-[#8B8EA8]'}`}
+          className={`text-sm font-bold ${orderType === 'market' ? 'text-[#00D1FF]' : 'text-[#8B8EA8]'}`}
         >
           Market
         </button>
         <button 
           onClick={() => setOrderType('limit')}
-          className={`text-sm font-bold ${orderType === 'limit' ? 'text-[#00D1CF]' : 'text-[#8B8EA8]'}`}
+          className={`text-sm font-bold ${orderType === 'limit' ? 'text-[#00D1FF]' : 'text-[#8B8EA8]'}`}
         >
           Limit
         </button>
@@ -96,7 +96,7 @@ export const OrderForm = () => {
           </div>
           <div className="grid grid-cols-4 gap-2 mt-1">
             {['25%', '50%', '75%', '100%'].map((pct) => (
-              <button key={pct} className="bg-[#161726] text-[10px] py-1 rounded border border-[#2D2E42] text-[#8B8EA8] hover:border-[#00D1CF] transition-colors">
+              <button key={pct} className="bg-[#0D1117] text-[10px] py-1 rounded border border-[#2D2E42] text-[#8B8EA8] hover:border-[#00D1FF] transition-colors">
                 {pct}
               </button>
             ))}
@@ -108,7 +108,7 @@ export const OrderForm = () => {
       <div className="flex flex-col gap-4">
         <div className="flex justify-between items-center text-xs">
           <span className="text-[#8B8EA8] font-bold uppercase">Leverage</span>
-          <span className="text-[#00D1CF] font-bold">{leverage}x</span>
+          <span className="text-[#00D1FF] font-bold">{leverage}x</span>
         </div>
         <input
           type="range"
@@ -116,12 +116,12 @@ export const OrderForm = () => {
           max="20"
           value={leverage}
           onChange={(e) => setLeverage(parseInt(e.target.value))}
-          className="w-full accent-[#00D1CF]"
+          className="w-full accent-[#00D1FF]"
         />
       </div>
 
       {/* Summary */}
-      <div className="bg-[#161726] rounded-lg p-3 flex flex-col gap-2 text-[11px]">
+      <div className="bg-[#0D1117] rounded-lg p-3 flex flex-col gap-2 text-[11px]">
         <div className="flex justify-between">
           <span className="text-[#8B8EA8]">Liquidation Price</span>
           <span className="text-white">--</span>
@@ -132,7 +132,7 @@ export const OrderForm = () => {
         </div>
         <div className="flex justify-between">
           <span className="text-[#8B8EA8]">Builder Allocation</span>
-          <span className="text-[#00D1CF]">100% (Drift)</span>
+          <span className="text-[#00D1FF]">100% (Drift)</span>
         </div>
       </div>
 
@@ -142,10 +142,10 @@ export const OrderForm = () => {
         disabled={!connected || isSubmitting}
         className={`w-full py-4 rounded-xl font-bold text-lg transition-all ${
           !connected 
-          ? 'bg-[#1A1B2E] text-[#8B8EA8] cursor-not-allowed' 
+          ? 'bg-[#0D1117] text-[#8B8EA8] cursor-not-allowed' 
           : orderSide === 'long' 
-            ? 'bg-[#00C896] text-white hover:opacity-90' 
-            : 'bg-[#FF4D6A] text-white hover:opacity-90'
+            ? 'bg-[#00FFA3] text-[#05070A] hover:opacity-90' 
+            : 'bg-[#FF4D6D] text-white hover:opacity-90'
         }`}
       >
         {isSubmitting ? (

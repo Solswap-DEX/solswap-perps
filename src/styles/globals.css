@@ -3,13 +3,14 @@
 @tailwind utilities;
 
 :root {
-  --bg-primary: #0C0D14;
-  --bg-card: #1A1B2E;
-  --color-cyan: #00D1CF;
-  --color-purple: #7B61FF;
-  --color-green: #00C896;
-  --color-red: #FF4D6A;
-  --color-text: #FFFFFF;
+  --bg-primary: #05070A;
+  --bg-card: #0D1117;
+  --color-primary: #00D1FF;
+  --color-primary-hover: #0099CC;
+  --color-success: #00FFA3;
+  --color-error: #FF4D6D;
+  --color-extra: #7B61FF;
+  --color-text: #F0F4F8;
   --color-muted: #8B8EA8;
 }
 
@@ -64,30 +65,30 @@ body {
 
 .btn-primary {
   @apply w-full py-3 rounded-lg font-bold transition-all;
-  background-color: var(--color-cyan);
+  background-color: var(--color-primary);
   color: var(--bg-primary);
 }
 
 .btn-long {
   @apply w-full py-3 rounded-lg font-bold transition-all;
-  background-color: var(--color-green);
+  background-color: var(--color-success);
   color: white;
 }
 
 .btn-short {
   @apply w-full py-3 rounded-lg font-bold transition-all;
-  background-color: var(--color-red);
+  background-color: var(--color-error);
   color: white;
 }
 
 input {
   @apply bg-transparent border rounded px-4 py-2 outline-none transition-all;
-  background-color: #161726;
+  background-color: #0D1117;
   border-color: #2D2E42;
 }
 
 input:focus {
-  border-color: var(--color-cyan);
+  border-color: var(--color-primary);
 }
 
 .no-scrollbar {

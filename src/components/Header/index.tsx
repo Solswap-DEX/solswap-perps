@@ -17,18 +17,18 @@ export const Header = () => {
   }, []);
 
   return (
-    <header className="h-16 border-b border-[#1A1B2E] bg-[#0C0D14] flex items-center justify-between px-6 sticky top-0 z-50">
+    <header className="h-16 border-b border-[#0D1117] bg-[#05070A] flex items-center justify-between px-6 sticky top-0 z-50">
       <div className="flex items-center gap-8">
         <Link href="/" className="flex items-center gap-2">
           <div className="text-2xl font-bold text-white">SolSwap</div>
-          <span className="bg-[#1A1B2E] text-[#00D1CF] text-xs px-2 py-1 rounded font-mono">PERPS</span>
+          <span className="bg-[#0D1117] text-[#00D1FF] text-xs px-2 py-1 rounded font-mono">PERPS</span>
         </Link>
         
         <nav className="flex items-center gap-6">
           <Link href="https://solswap.cloud/swap/" className="text-[#8B8EA8] hover:text-white transition-colors">
             Swap
           </Link>
-          <Link href="/trade" className="text-white border-b-2 border-[#00D1CF] h-16 flex items-center">
+          <Link href="/trade" className="text-white border-b-2 border-[#00D1FF] h-16 flex items-center">
             Perpetuals
           </Link>
         </nav>
@@ -42,9 +42,9 @@ export const Header = () => {
           </div>
         )}
         {hasMounted ? (
-          <WalletMultiButton className="!bg-[#1A1B2E] !h-10 !rounded-lg !text-sm !font-bold hover:!opacity-80 transition-opacity" />
+          <WalletMultiButton className="!bg-[#0D1117] !h-10 !rounded-lg !text-sm !font-bold hover:!opacity-80 transition-opacity" />
         ) : (
-          <button className="bg-[#1A1B2E] h-10 rounded-lg px-4 text-sm font-bold text-white opacity-80">
+          <button className="bg-[#0D1117] h-10 rounded-lg px-4 text-sm font-bold text-white opacity-80">
             Select Wallet
           </button>
         )}

@@ -9,8 +9,8 @@ const MarketTab = ({ market, isActive, onClick, currentPrice }: { market: any, i
       onClick={onClick}
       className={`flex items-center gap-4 px-4 py-2 rounded-lg transition-all border ${
         isActive
-          ? 'bg-[#1A1B2E] border-[#00D1CF] text-white shadow-[0_0_15px_rgba(0,209,207,0.1)]'
-          : 'bg-[#0C0D14] border-transparent text-[#8B8EA8] hover:bg-[#1A1B2E] hover:text-white'
+          ? 'bg-[#0D1117] border-[#00D1FF] text-white shadow-[0_0_15px_rgba(0,209,255,0.1)]'
+          : 'bg-[#05070A] border-transparent text-[#8B8EA8] hover:bg-[#0D1117] hover:text-white'
       }`}
     >
       <div className="flex flex-col items-start">
@@ -33,7 +33,7 @@ export const MarketSelector = () => {
   const { prices } = useMarketPrices(poolIds);
 
   return (
-    <div className="flex items-center gap-3 p-4 border-b border-[#1A1B2E] bg-[#0C0D14] overflow-x-auto no-scrollbar">
+    <div className="flex items-center gap-3 p-4 border-b border-[#0D1117] bg-[#05070A] overflow-x-auto no-scrollbar">
       {PERP_MARKETS.map((market) => (
         <MarketTab
           key={market.symbol}
