@@ -1,7 +1,13 @@
 import React, { useState } from 'react';
+import dynamic from 'next/dynamic';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { useTradingStore } from '@/store/tradingStore';
 import { DRIFT_CONFIG } from '@/config/driftConfig';
+
+const WalletMultiButton = dynamic(
+  () => import('@solana/wallet-adapter-react-ui').then((m) => m.WalletMultiButton),
+  { ssr: false }
+);
 
 export const OrderForm = () => {
   const { connected } = useWallet();
@@ -136,26 +142,28 @@ export const OrderForm = () => {
         </div>
       </div>
 
-      {/* Submit Button */}
-      <button
-        onClick={handleSubmit}
-        disabled={!connected || isSubmitting}
-        className={`w-full py-4 rounded-xl font-bold text-lg transition-all ${
-          !connected 
-          ? 'bg-[#0D1117] text-[#8B8EA8] cursor-not-allowed' 
-          : orderSide === 'long' 
-            ? 'bg-[#00FFA3] text-[#05070A] hover:opacity-90' 
-            : 'bg-[#FF4D6D] text-white hover:opacity-90'
-        }`}
-      >
-        {isSubmitting ? (
-          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mx-auto"></div>
-        ) : !connected ? (
-          'Connect Wallet'
-        ) : (
-          `Open ${orderSide === 'long' ? 'Long' : 'Short'}`
-        )}
-      </button>
+      {/* Submit Button or Connect Wallet */}
+      {!connected ? (
+        <div className="w-full flex justify-center">
+          <WalletMultiButton className="!w-full !py-4 !rounded-xl !font-bold !text-lg !bg-[#00D1FF] !text-[#05070A] hover:!opacity-90 transition-all" />
+        </div>
+      ) : (
+        <button
+          onClick={handleSubmit}
+          disabled={isSubmitting}
+          className={`w-full py-4 rounded-xl font-bold text-lg transition-all ${
+            orderSide === 'long' 
+              ? 'bg-[#00FFA3] text-[#05070A] hover:opacity-90' 
+              : 'bg-[#FF4D6D] text-white hover:opacity-90'
+          }`}
+        >
+          {isSubmitting ? (
+            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mx-auto"></div>
+          ) : (
+            `Open ${orderSide === 'long' ? 'Long' : 'Short'}`
+          )}
+        </button>
+      )}
     </div>
   );
 };

@@ -43,11 +43,11 @@ export const Header = () => {
             </div>
           )}
           {hasMounted ? (
-            <div className="scale-90 md:scale-100 origin-right">
+            <div className="hidden md:block scale-90 md:scale-100 origin-right">
               <WalletMultiButton className="!bg-[#0D1117] !h-10 !rounded-lg !text-sm !font-bold hover:!opacity-80 transition-opacity" />
             </div>
           ) : (
-            <button className="bg-[#0D1117] h-10 rounded-lg px-4 text-sm font-bold text-white opacity-80">
+            <button className="hidden md:block bg-[#0D1117] h-10 rounded-lg px-4 text-sm font-bold text-white opacity-80">
               Select Wallet
             </button>
           )}
