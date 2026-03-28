@@ -33,21 +33,16 @@ jobs:
           NEXT_PUBLIC_BUILDER_WALLET: 5KUA4a4qFusTvJeSquKsBSEPvhiVedvaj8hE8pVp2vmz
           NEXT_PUBLIC_SITE_URL: https://perps.solswap.cloud
 
-      - name: Verify build output
+      - name: Package standalone artifacts
         run: |
-          echo "Chunks count: $(find .next/static/chunks -name '*.js' | wc -l)"
-          ls .next/static/chunks/pages/
-          cat .next/BUILD_ID
-
-      - name: Package build artifacts
-        run: |
-          tar -czf deploy.tar.gz \
-            .next/ \
-            public/ \
-            package.json \
-            package-lock.json \
-            next.config.js \
-            .env.production
+          # Per Next.js standalone documentation:
+          # We need standalone folder + static + public
+          cp -r .next/static .next/standalone/.next/static
+          cp -r public .next/standalone/public
+          
+          cd .next/standalone
+          tar -czf ../../deploy.tar.gz .
+          cd ../..
           echo "Archive size: $(du -sh deploy.tar.gz)"
 
       - name: Upload archive to server
@@ -58,6 +53,8 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           source: "deploy.tar.gz"
           target: "/tmp/"
+          timeout: 30m
+          command_timeout: 30m
 
       - name: Deploy on server
         uses: appleboy/ssh-action@v1
@@ -65,6 +62,8 @@ jobs:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
+          timeout: 30m
+          command_timeout: 30m
           script: |
             set -e
 
@@ -76,28 +75,21 @@ jobs:
             fuser -k 3001/tcp 2>/dev/null || true
             sleep 2
 
-            # Clean old build
-            sudo rm -rf /var/www/perps.solswap.cloud/.next
-            sudo rm -rf /var/www/perps.solswap.cloud/public
-            sudo rm -f /var/www/perps.solswap.cloud/.env.production
+            # Clean old deployment
+            sudo rm -rf /var/www/perps.solswap.cloud/*
+            sudo mkdir -p /var/www/perps.solswap.cloud
 
-            # Extract new build
+            # Extract new standalone build
             cd /var/www/perps.solswap.cloud
             tar -xzf /tmp/deploy.tar.gz -C /var/www/perps.solswap.cloud
             rm /tmp/deploy.tar.gz
 
-            # Verify chunks
-            echo "Chunks on server: $(find .next/static/chunks -name '*.js' | wc -l)"
-            cat .next/BUILD_ID
-
             # Fix ownership
             sudo chown -R admin:admin /var/www/perps.solswap.cloud
 
-            # Install production deps
-            npm ci --omit=dev --legacy-peer-deps || npm install --omit=dev --legacy-peer-deps
-
-            # Start PM2
-            pm2 start npm --name "solswap-perps" -- start -- -p 3001
+            # Start PM2 using the standalone server.js
+            # NO npm install needed on server anymore!
+            PORT=3001 pm2 start server.js --name "solswap-perps"
             sleep 5
             pm2 save
 

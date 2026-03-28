@@ -28,5 +28,6 @@ const nextConfig = {
     domains: ['solswap.cloud', 'perps.solswap.cloud'],
     unoptimized: true,
   },
+  output: 'standalone',
 }
 module.exports = nextConfig
