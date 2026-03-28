@@ -54,11 +54,11 @@ export const Header = () => {
         </div>
       </header>
 
-      {/* Mobile Bottom Navbar */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-[#05070A] border-t border-[#0D1117] flex items-center justify-around px-4 z-[100] safe-area-inset-bottom">
+      {/* Mobile Bottom Navbar (5 items standard) */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-[#05070A] border-t border-[#0D1117] flex items-center justify-around px-2 z-[100] safe-area-inset-bottom">
         <Link href="https://solswap.cloud/swap/" className="flex flex-col items-center gap-1 group">
           <div className="text-[#8B8EA8] group-hover:text-white transition-colors">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="16 3 21 3 21 8"></polyline>
               <line x1="4" y1="20" x2="21" y2="3"></line>
               <polyline points="21 16 21 21 16 21"></polyline>
@@ -66,29 +66,49 @@ export const Header = () => {
               <line x1="4" y1="4" x2="9" y2="9"></line>
             </svg>
           </div>
-          <span className="text-[10px] text-[#8B8EA8] font-medium uppercase tracking-tighter">Swap</span>
+          <span className="text-[9px] text-[#8B8EA8] font-medium uppercase tracking-tighter">Swap</span>
         </Link>
 
-        <Link href="/trade" className="flex flex-col items-center gap-1 group">
-          <div className="text-[#00D1FF]">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="12" y1="20" x2="12" y2="10"></line>
-              <line x1="18" y1="20" x2="18" y2="4"></line>
-              <line x1="6" y1="20" x2="6" y2="16"></line>
+        <Link href="https://solswap.cloud/liquidity/" className="flex flex-col items-center gap-1 group">
+          <div className="text-[#8B8EA8] group-hover:text-white transition-colors">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" />
             </svg>
           </div>
-          <span className="text-[10px] text-[#00D1FF] font-bold uppercase tracking-tighter">Perps</span>
+          <span className="text-[9px] text-[#8B8EA8] font-medium uppercase tracking-tighter">Liquidity</span>
         </Link>
 
         <Link href="https://solswap.cloud/portfolio/" className="flex flex-col items-center gap-1 group">
           <div className="text-[#8B8EA8] group-hover:text-white transition-colors">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
               <line x1="3" y1="9" x2="21" y2="9"></line>
               <line x1="9" y1="21" x2="9" y2="9"></line>
             </svg>
           </div>
-          <span className="text-[10px] text-[#8B8EA8] font-medium uppercase tracking-tighter">Portfolio</span>
+          <span className="text-[9px] text-[#8B8EA8] font-medium uppercase tracking-tighter">Portfolio</span>
+        </Link>
+
+        <Link href="/trade" className="flex flex-col items-center gap-1 group">
+          <div className="text-[#00D1FF]">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="12" y1="20" x2="12" y2="10"></line>
+              <line x1="18" y1="20" x2="18" y2="4"></line>
+              <line x1="6" y1="20" x2="6" y2="16"></line>
+            </svg>
+          </div>
+          <span className="text-[9px] text-[#00D1FF] font-bold uppercase tracking-tighter">Perps</span>
+        </Link>
+
+        <Link href="https://solswap.cloud/" className="flex flex-col items-center gap-1 group">
+          <div className="text-[#8B8EA8] group-hover:text-white transition-colors">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="1"></circle>
+              <circle cx="19" cy="12" r="1"></circle>
+              <circle cx="5" cy="12" r="1"></circle>
+            </svg>
+          </div>
+          <span className="text-[9px] text-[#8B8EA8] font-medium uppercase tracking-tighter">More</span>
         </Link>
       </nav>
     </>
