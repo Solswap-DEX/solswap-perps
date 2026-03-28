@@ -52,7 +52,7 @@ const TradePage = () => {
   }, [currentPrice]);
 
   return (
-    <div className="flex flex-col h-screen bg-[#05070A] text-white overflow-hidden">
+    <div className="flex flex-col min-h-screen bg-[#0C0D14] text-white overflow-x-hidden pb-16 lg:pb-0">
       <Header />
       <main className="flex flex-col lg:flex-row flex-1 overflow-hidden min-h-0">
         <div className="lg:hidden w-full p-4 border-b border-[#0D1117] bg-[#05070A] flex-shrink-0">
