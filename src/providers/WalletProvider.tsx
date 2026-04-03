@@ -16,6 +16,7 @@ export const SolanaWalletProvider = ({ children }: { children: React.ReactNode }
 
     const wallets = useMemo(
         () => [
+            new PhantomWalletAdapter(),
             new SolflareWalletAdapter(),
             new CoinbaseWalletAdapter(),
         ],
