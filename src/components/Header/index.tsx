@@ -45,7 +45,7 @@ export const Header = () => {
             <span className="text-[10px] text-[#8B8EA8] uppercase font-bold">Mainnet</span>
             <span className="text-[11px] text-white/50">{connected ? 'connected' : 'disconnected'}</span>
           </div>
-          {hasMounted && <div className="scale-90 md:scale-100 origin-right"><SolWallet /></div>}
+          {hasMounted && <SolWallet />}
         </div>
       </header>
 
