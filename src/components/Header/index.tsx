@@ -128,7 +128,7 @@ export const Header = () => {
               {/* Menu Container */}
               <div className="absolute bottom-[calc(100%+8px)] right-0 w-48 bg-[#0D1117] border border-[#2D2E42] rounded-xl shadow-2xl py-2 z-50 animate-fade-in-up">
                 
-                <a href="https://solswap.cloud/bridge" className="flex items-center gap-3 px-4 py-3 hover:bg-[#13141F] transition-colors" onClick={() => setIsMoreMenuOpen(false)}>
+                <a href="https://solswap.cloud/bridge/" className="flex items-center gap-3 px-4 py-3 hover:bg-[#13141F] transition-colors" onClick={() => setIsMoreMenuOpen(false)}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7B61FF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path><polyline points="16 6 12 2 8 6"></polyline><line x1="12" y1="2" x2="12" y2="15"></line></svg>
                   <span className="text-sm text-white font-medium">Bridge</span>
                 </a>
