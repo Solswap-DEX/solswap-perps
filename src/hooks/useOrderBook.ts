@@ -31,9 +31,9 @@ export const useOrderBook = (basePrice: number | null = null) => {
     const bids: OrderBookEntry[] = [];
     const asks: OrderBookEntry[] = [];
 
-    // Generate 15 asks (above current price)
+    // Generate 5 asks (above current price)
     let cumulativeAskTotal = 0;
-    for (let i = 1; i <= 15; i++) {
+    for (let i = 1; i <= 5; i++) {
       const p = price + (i * (price * 0.0005));
       const s = Math.random() * 5 + 0.1;
       cumulativeAskTotal += p * s;
@@ -44,9 +44,9 @@ export const useOrderBook = (basePrice: number | null = null) => {
       });
     }
 
-    // Generate 15 bids (below current price)
+    // Generate 5 bids (below current price)
     let cumulativeBidTotal = 0;
-    for (let i = 1; i <= 15; i++) {
+    for (let i = 1; i <= 5; i++) {
       const p = price - (i * (price * 0.0005));
       const s = Math.random() * 5 + 0.1;
       cumulativeBidTotal += p * s;
@@ -119,7 +119,7 @@ export const useOrderBook = (basePrice: number | null = null) => {
       const rawAsks = orderBookData.asks || [];
       const sortedAsks = [...rawAsks]
         .sort((a: any, b: any) => Number(a.price) - Number(b.price))
-        .slice(0, 15);
+        .slice(0, 5);
       
       let cumulativeTotal = 0;
       for (const order of sortedAsks) {
@@ -138,7 +138,7 @@ export const useOrderBook = (basePrice: number | null = null) => {
       const rawBids = orderBookData.bids || [];
       const sortedBids = [...rawBids]
         .sort((a: any, b: any) => Number(b.price) - Number(a.price))
-        .slice(0, 15);
+        .slice(0, 5);
       
       cumulativeTotal = 0;
       for (const order of sortedBids) {

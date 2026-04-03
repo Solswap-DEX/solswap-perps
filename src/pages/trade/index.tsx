@@ -28,7 +28,7 @@ const TradePage = () => {
   useEffect(() => {
     if (!currentPrice) return;
     const precision = currentPrice > 1000 ? 1 : 2;
-    const generateInitialTrades = () => Array.from({ length: 25 }).map((_, i) => ({
+    const generateInitialTrades = () => Array.from({ length: 5 }).map((_, i) => ({
       id: i,
       price: (currentPrice + (Math.random() - 0.5) * currentPrice * 0.002).toFixed(precision),
       size: (Math.random() * 10 + 0.01).toFixed(3),
@@ -45,7 +45,7 @@ const TradePage = () => {
           side: Math.random() > 0.5 ? 'BUY' : 'SELL',
           time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
         },
-        ...prev.slice(0, 24)
+        ...prev.slice(0, 4)
       ]);
     }, 3000);
     return () => clearInterval(interval);
