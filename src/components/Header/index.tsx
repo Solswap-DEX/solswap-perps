@@ -22,15 +22,24 @@ export const Header = () => {
       <header className="h-16 border-b border-[#0D1117] bg-[#05070A] flex items-center justify-between px-3 md:px-6 sticky top-0 z-50">
         <div className="flex items-center gap-4 md:gap-8">
           <Link href="/" className="flex items-center gap-2">
-            <div className="text-xl md:text-2xl font-bold text-white">SolSwap</div>
+            <img src="/logo.png" alt="SolSwap" width={120} height={30} style={{ objectFit: 'contain', height: '30px', width: 'auto' }} />
             <span className="bg-[#0D1117] text-[#00D1FF] text-[10px] md:text-xs px-2 py-1 rounded font-mono">PERPS</span>
           </Link>
           
-          <nav className="hidden md:flex items-center gap-6">
+          <nav className="hidden md:flex items-center gap-6 font-medium text-[15px]">
             <a href="https://solswap.cloud/swap/" className="text-[#8B8EA8] hover:text-white transition-colors">
               Swap
             </a>
-            <Link href="/trade" className="text-white border-b-2 border-[#00D1FF] h-16 flex items-center">
+            <a href="https://solswap.cloud/liquidity-pools/" className="text-[#8B8EA8] hover:text-white transition-colors">
+              Liquidity
+            </a>
+            <a href="https://solswap.cloud/portfolio/" className="text-[#8B8EA8] hover:text-white transition-colors">
+              Portfolio
+            </a>
+            <a href="https://solswap.cloud/bridge/" className="text-[#8B8EA8] hover:text-white transition-colors">
+              Bridge
+            </a>
+            <Link href="/trade" className="text-white border-b-2 border-[#00D1FF] h-16 flex items-center font-bold">
               Perpetuals
             </Link>
           </nav>

@@ -1,91 +1,81 @@
 import React, { useEffect, useRef } from 'react';
-import { createChart, ColorType, CandlestickData, CrosshairMode, ISeriesApi } from 'lightweight-charts';
-import { useMarketData } from '@/hooks/useMarketData';
+import { useTradingStore } from '@/store/tradingStore';
 
 interface TradingViewProps {
   pool: string;
   timeframe: string;
 }
 
+const TIMEFRAME_TO_TV_INTERVAL: Record<string, string> = {
+  '1m': '1',
+  '5m': '5',
+  '15m': '15',
+  '1h': '60',
+  '4h': '240',
+  '1D': 'D',
+};
+
+// Next.js fast refresh sometimes remounts the component, we want to ensure the script only loads once.
+let tvScriptLoadingPromise: Promise<void> | null = null;
+
 export const TradingView: React.FC<TradingViewProps> = ({ pool, timeframe }) => {
   const chartContainerRef = useRef<HTMLDivElement>(null);
-  const chartRef = useRef<any>(null);
-  const candleSeriesRef = useRef<ISeriesApi<'Candlestick'>>(null);
-  const { candles, isLoading } = useMarketData(pool, timeframe);
+  const { selectedMarket } = useTradingStore();
+  
+  // Map our internal market to a TradingView crypto pair
+  const tvSymbol = selectedMarket === 'BTC-PERP' ? 'BINANCE:BTCUSDT' : 
+                   selectedMarket === 'ETH-PERP' ? 'BINANCE:ETHUSDT' : 
+                   'BINANCE:SOLUSDT';
+
+  const tvInterval = TIMEFRAME_TO_TV_INTERVAL[timeframe] || '60';
 
   useEffect(() => {
-    if (!chartContainerRef.current) return;
+    if (!tvScriptLoadingPromise) {
+      tvScriptLoadingPromise = new Promise((resolve) => {
+        const script = document.createElement('script');
+        script.id = 'tradingview-widget-loading-script';
+        script.src = 'https://s3.tradingview.com/tv.js';
+        script.type = 'text/javascript';
+        script.onload = () => resolve();
+        // Check if script already exists (in case of hot reload)
+        if (!document.getElementById('tradingview-widget-loading-script')) {
+            document.head.appendChild(script);
+        } else {
+            resolve();
+        }
+      });
+    }
 
-    const getContainerHeight = () => {
-      const h = chartContainerRef.current?.clientHeight || 0;
-      // Fallback height so the chart can render even if container
-      // is temporarily 0 during layout/hydration.
-      return h > 0 ? h : 320;
-    };
-
-    const chart = createChart(chartContainerRef.current, {
-      width: chartContainerRef.current.clientWidth,
-      height: getContainerHeight(),
-      layout: {
-        background: { type: ColorType.Solid, color: '#05070A' },
-        textColor: '#8B8EA8',
-      },
-      grid: {
-        vertLines: { color: '#0D1117' },
-        horzLines: { color: '#0D1117' },
-      },
-      timeScale: {
-        borderColor: '#0D1117',
-        timeVisible: true,
-        secondsVisible: false,
-      },
-      rightPriceScale: {
-        borderColor: '#0D1117',
-      },
-    });
-
-    const candleSeries = chart.addCandlestickSeries({
-      upColor: '#00FFA3',
-      downColor: '#FF4D6D',
-      borderUpColor: '#00FFA3',
-      borderDownColor: '#FF4D6D',
-      wickUpColor: '#00FFA3',
-      wickDownColor: '#FF4D6D',
-    });
-
-    chartRef.current = chart;
-    (candleSeriesRef as any).current = candleSeries;
-
-    const resizeObserver = new ResizeObserver(() => {
-      if (chartContainerRef.current) {
-        chart.applyOptions({
-          width: chartContainerRef.current.clientWidth,
-          height: getContainerHeight(),
+    tvScriptLoadingPromise.then(() => {
+      if (chartContainerRef.current && 'TradingView' in window) {
+        // @ts-ignore
+        new window.TradingView.widget({
+          autosize: true,
+          symbol: tvSymbol,
+          interval: tvInterval,
+          timezone: "Etc/UTC",
+          theme: "dark",
+          style: "1",
+          locale: "en",
+          enable_publishing: false,
+          backgroundColor: "#05070A",
+          gridColor: "#0D1117",
+          hide_top_toolbar: false,
+          hide_legend: false,
+          save_image: false,
+          container_id: chartContainerRef.current.id,
+          toolbar_bg: "#05070A",
+          studies: [
+            "Volume@tv-basicstudies"
+          ]
         });
       }
     });
-    resizeObserver.observe(chartContainerRef.current);
-
-    return () => {
-      resizeObserver.disconnect();
-      chart.remove();
-    };
-  }, []);
-
-  useEffect(() => {
-    if (candleSeriesRef.current && candles.length > 0) {
-      candleSeriesRef.current.setData(candles as CandlestickData[]);
-    }
-  }, [candles]);
+  }, [tvSymbol, tvInterval]);
 
   return (
-    <div className="relative w-full h-full min-h-[300px]">
-      {isLoading && candles.length === 0 && (
-        <div className="absolute inset-0 flex items-center justify-center bg-[#05070A]/50 z-10">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#00D1FF]"></div>
-        </div>
-      )}
-      <div ref={chartContainerRef} className="w-full h-full" />
+    <div className="w-full h-full min-h-[300px] border-none bg-[#05070A]">
+      <div id="tradingview_chart_container" ref={chartContainerRef} className="w-full h-full" />
     </div>
   );
 };
