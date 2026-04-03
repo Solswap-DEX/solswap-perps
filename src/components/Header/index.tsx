@@ -27,9 +27,9 @@ export const Header = () => {
           </Link>
           
           <nav className="hidden md:flex items-center gap-6">
-            <Link href="https://solswap.cloud/swap/" className="text-[#8B8EA8] hover:text-white transition-colors">
+            <a href="https://solswap.cloud/swap/" className="text-[#8B8EA8] hover:text-white transition-colors">
               Swap
-            </Link>
+            </a>
             <Link href="/trade" className="text-white border-b-2 border-[#00D1FF] h-16 flex items-center">
               Perpetuals
             </Link>
@@ -57,7 +57,7 @@ export const Header = () => {
 
       {/* Mobile Bottom Navbar (5 items standard) */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-[#05070A] border-t border-[#0D1117] flex items-center justify-around px-2 z-[100] safe-area-inset-bottom">
-        <Link href="https://solswap.cloud/swap/" className="flex flex-col items-center gap-1 group">
+        <a href="https://solswap.cloud/swap/" className="flex flex-col items-center gap-1 group">
           <div className="text-[#8B8EA8] group-hover:text-white transition-colors">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="16 3 21 3 21 8"></polyline>
@@ -68,18 +68,18 @@ export const Header = () => {
             </svg>
           </div>
           <span className="text-[9px] text-[#8B8EA8] font-medium uppercase tracking-tighter">Swap</span>
-        </Link>
+        </a>
 
-        <Link href="https://solswap.cloud/liquidity/" className="flex flex-col items-center gap-1 group">
+        <a href="https://solswap.cloud/liquidity/" className="flex flex-col items-center gap-1 group">
           <div className="text-[#8B8EA8] group-hover:text-white transition-colors">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" />
             </svg>
           </div>
           <span className="text-[9px] text-[#8B8EA8] font-medium uppercase tracking-tighter">Liquidity</span>
-        </Link>
+        </a>
 
-        <Link href="https://solswap.cloud/portfolio/" className="flex flex-col items-center gap-1 group">
+        <a href="https://solswap.cloud/portfolio/" className="flex flex-col items-center gap-1 group">
           <div className="text-[#8B8EA8] group-hover:text-white transition-colors">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
@@ -88,7 +88,7 @@ export const Header = () => {
             </svg>
           </div>
           <span className="text-[9px] text-[#8B8EA8] font-medium uppercase tracking-tighter">Portfolio</span>
-        </Link>
+        </a>
 
         <Link href="/trade" className="flex flex-col items-center gap-1 group">
           <div className="text-[#00D1FF]">
@@ -128,10 +128,10 @@ export const Header = () => {
               {/* Menu Container */}
               <div className="absolute bottom-[calc(100%+8px)] right-0 w-48 bg-[#0D1117] border border-[#2D2E42] rounded-xl shadow-2xl py-2 z-50 animate-fade-in-up">
                 
-                <Link href="https://solswap.cloud/bridge" className="flex items-center gap-3 px-4 py-3 hover:bg-[#13141F] transition-colors" onClick={() => setIsMoreMenuOpen(false)}>
+                <a href="https://solswap.cloud/bridge" className="flex items-center gap-3 px-4 py-3 hover:bg-[#13141F] transition-colors" onClick={() => setIsMoreMenuOpen(false)}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7B61FF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path><polyline points="16 6 12 2 8 6"></polyline><line x1="12" y1="2" x2="12" y2="15"></line></svg>
                   <span className="text-sm text-white font-medium">Bridge</span>
-                </Link>
+                </a>
                 
                 <div className="h-[1px] bg-[#2D2E42] w-full my-1"></div>
                 
