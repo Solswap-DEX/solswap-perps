@@ -80,14 +80,14 @@ const TradePage = () => {
             </div>
           </div>
           
-          <div className="flex-1 flex flex-row overflow-hidden min-h-0">
+          <div className="flex-1 flex flex-col lg:flex-row overflow-y-auto lg:overflow-hidden min-h-0">
             {/* Chart Area */}
-            <div className="flex-1 relative border-r border-[#0D1117] min-w-0">
+            <div className="w-full lg:flex-1 relative border-b lg:border-b-0 lg:border-r border-[#0D1117] min-h-[350px] lg:min-h-0 min-w-0 flex-shrink-0 lg:flex-shrink">
               <TradingView pool={currentMarket.geckoPool} timeframe={timeframe} />
             </div>
 
             {/* Order Book & Trades Strip (Vertical Sidebar) */}
-            <div className="w-[300px] flex flex-col overflow-hidden bg-[#05070A] flex-shrink-0">
+            <div className="w-full lg:w-[300px] flex flex-col min-h-[600px] lg:min-h-0 overflow-hidden bg-[#05070A] flex-shrink-0">
               {/* Order Book Section */}
               <div className="flex-[3] flex flex-col overflow-hidden border-b border-[#0D1117]">
                 <div className="p-3 bg-[#05070A] border-b border-[#0D1117] flex-shrink-0">

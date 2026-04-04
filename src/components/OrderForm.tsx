@@ -1,13 +1,8 @@
 import React, { useState } from 'react';
-import dynamic from 'next/dynamic';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { useTradingStore } from '@/store/tradingStore';
 import { DRIFT_CONFIG } from '@/config/driftConfig';
-
-const WalletMultiButton = dynamic(
-  () => import('@solana/wallet-adapter-react-ui').then((m) => m.WalletMultiButton),
-  { ssr: false }
-);
+import { SelectWalletModal } from './SolWallet/SelectWalletModal';
 
 export const OrderForm = () => {
   const { connected } = useWallet();
@@ -20,6 +15,7 @@ export const OrderForm = () => {
   } = useTradingStore();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
 
   const handleSubmit = async () => {
     if (!connected) return;
@@ -145,7 +141,13 @@ export const OrderForm = () => {
       {/* Submit Button or Connect Wallet */}
       {!connected ? (
         <div className="w-full flex justify-center">
-          <WalletMultiButton className="!w-full !py-4 !rounded-xl !font-bold !text-lg !bg-[#00D1FF] !text-[#05070A] hover:!opacity-90 transition-all" />
+          <button
+            onClick={() => setIsWalletModalOpen(true)}
+            className="w-full py-4 rounded-xl font-bold text-lg bg-[#00D1FF] text-[#05070A] hover:opacity-90 transition-all"
+          >
+            Connect Wallet
+          </button>
+          <SelectWalletModal isOpen={isWalletModalOpen} onClose={() => setIsWalletModalOpen(false)} />
         </div>
       ) : (
         <button
