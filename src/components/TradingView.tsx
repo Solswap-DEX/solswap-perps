@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { useTradingStore } from '@/store/tradingStore';
+import { PERP_MARKETS } from '@/config/markets';
 
 interface TradingViewProps {
   pool: string;
@@ -22,10 +23,9 @@ export const TradingView: React.FC<TradingViewProps> = ({ pool, timeframe }) => 
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const { selectedMarket } = useTradingStore();
   
-  // Map our internal market to a TradingView crypto pair
-  const tvSymbol = selectedMarket === 'BTC-PERP' ? 'BINANCE:BTCUSDT' : 
-                   selectedMarket === 'ETH-PERP' ? 'BINANCE:ETHUSDT' : 
-                   'BINANCE:SOLUSDT';
+  // Dynamically resolve TradingView symbol from market config
+  const currentMarket = PERP_MARKETS.find(m => m.symbol === selectedMarket);
+  const tvSymbol = currentMarket?.tvSymbol || 'BINANCE:SOLUSDT';
 
   const tvInterval = TIMEFRAME_TO_TV_INTERVAL[timeframe] || '60';
 
