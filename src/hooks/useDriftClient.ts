@@ -148,6 +148,7 @@ export const useDriftClient = () => {
     return () => {
       if (client) client.unsubscribe();
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [wallet, connection]);
 
   // ─── 2. Unified "Enable Trading" onboarding ─────────────────────────────────
@@ -235,6 +236,7 @@ export const useDriftClient = () => {
     } finally {
       setIsLoading(false);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [driftClient, wallet, onboardingStatus]);
 
   // ─── 3. Place order ──────────────────────────────────────────────────────────
@@ -285,6 +287,7 @@ export const useDriftClient = () => {
 
     // Fallback to native SDK call if we cannot extract the ix
     return await driftClient.placePerpOrder(orderParams);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [driftClient, wallet, onboardingStatus]);
 
   // ─── 4. Close position ───────────────────────────────────────────────────────

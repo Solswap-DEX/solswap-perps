@@ -57,6 +57,7 @@ export function RevenueDebugPanel() {
     if (isDebug && driftClient) {
       refresh();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isDebug, driftClient]);
 
   if (!isDebug) return null;

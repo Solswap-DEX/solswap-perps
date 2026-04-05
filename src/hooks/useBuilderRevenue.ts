@@ -17,12 +17,9 @@ import { DRIFT_CONFIG } from '@/config/driftConfig';
 export interface BuilderRevenueStats {
   /** Whether the RevenueShareAccount PDA exists on-chain */
   accountExists: boolean;
-  /** Total fees accumulated (in USDC micro-units, i.e. 6 decimals) */
-  totalFeesRaw: bigint;
   /** Total fees in human-readable USDC */
   totalFeesUSDC: number;
-  /** Pending (unclaimed) fees */
-  pendingFeesRaw: bigint;
+  /** Pending (unclaimed) fees in USDC */
   pendingFeesUSDC: number;
   /** ISO timestamp of last successful check */
   lastChecked: string;
@@ -32,9 +29,7 @@ export interface BuilderRevenueStats {
 
 const INITIAL_STATS: BuilderRevenueStats = {
   accountExists: false,
-  totalFeesRaw: 0n,
   totalFeesUSDC: 0,
-  pendingFeesRaw: 0n,
   pendingFeesUSDC: 0,
   lastChecked: '',
   error: null,
@@ -58,18 +53,31 @@ async function deriveRevenueSharePDA(
   return pda;
 }
 
-/** Parse raw account data to extract fee fields (layout offset based on Drift IDL) */
-function parseRevenueShareData(data: Buffer): { totalFees: bigint; pendingFees: bigint } {
+/**
+ * Parse raw account data to extract fee fields.
+ * Returns values in USDC micro-units (6 decimals) as plain numbers.
+ * Avoids BigInt literals for ES2019 compatibility.
+ */
+function parseRevenueShareData(data: Buffer): { totalFees: number; pendingFees: number } {
   try {
     // Drift's RevenueShare account layout (after 8-byte discriminator):
-    // Offset 8:  totalRevenue (u64, 8 bytes)
-    // Offset 16: pendingRevenue (u64, 8 bytes)
-    if (data.length < 24) return { totalFees: 0n, pendingFees: 0n };
-    const totalFees = data.readBigUInt64LE(8);
-    const pendingFees = data.readBigUInt64LE(16);
+    // Offset 8:  totalRevenue (u64 LE, 8 bytes)
+    // Offset 16: pendingRevenue (u64 LE, 8 bytes)
+    if (data.length < 24) return { totalFees: 0, pendingFees: 0 };
+
+    // Read as two 32-bit halves to avoid BigInt — safe for USDC amounts
+    // (max representable: ~9 quadrillion micro-USDC = $9 billion)
+    const totalLow  = data.readUInt32LE(8);
+    const totalHigh = data.readUInt32LE(12);
+    const pendLow   = data.readUInt32LE(16);
+    const pendHigh  = data.readUInt32LE(20);
+
+    const totalFees   = totalLow + totalHigh * 0x100000000;
+    const pendingFees = pendLow  + pendHigh  * 0x100000000;
+
     return { totalFees, pendingFees };
   } catch {
-    return { totalFees: 0n, pendingFees: 0n };
+    return { totalFees: 0, pendingFees: 0 };
   }
 }
 
@@ -103,13 +111,10 @@ export function useBuilderRevenue(
       if (!accountInfo) {
         setStats({
           accountExists: false,
-          totalFeesRaw: 0n,
           totalFeesUSDC: 0,
-          pendingFeesRaw: 0n,
           pendingFeesUSDC: 0,
           lastChecked: new Date().toISOString(),
-          error:
-            'RevenueShareAccount does not exist. Run initializeRevenueShare() first.',
+          error: 'RevenueShareAccount does not exist. Run initializeRevenueShare() first.',
         });
         return;
       }
@@ -119,13 +124,11 @@ export function useBuilderRevenue(
       );
 
       // USDC has 6 decimals on Solana
-      const toUSDC = (raw: bigint) => Number(raw) / 1_000_000;
+      const toUSDC = (raw: number) => raw / 1_000_000;
 
       setStats({
         accountExists: true,
-        totalFeesRaw: totalFees,
         totalFeesUSDC: toUSDC(totalFees),
-        pendingFeesRaw: pendingFees,
         pendingFeesUSDC: toUSDC(pendingFees),
         lastChecked: new Date().toISOString(),
         error: null,
