@@ -9,6 +9,9 @@ interface SelectWalletModalProps {
 
 export const SelectWalletModal: React.FC<SelectWalletModalProps> = ({ isOpen, onClose }) => {
   const featuredWalletNames = ['Phantom', 'Solflare', 'Backpack', 'Trust', 'Exodus', 'Gem Wallet', 'Atomic'];
+  const { select, wallets } = useWallet();
+  const [showUninstalled, setShowUninstalled] = useState(false);
+  const uninstalledWallets = wallets.filter((w) => w.readyState === WalletReadyState.NotDetected || w.readyState === WalletReadyState.Unsupported);
 
   const handleConnect = (walletName: any) => {
     select(walletName);
