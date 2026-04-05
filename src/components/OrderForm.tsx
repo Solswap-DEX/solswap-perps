@@ -212,7 +212,7 @@ export const OrderForm = () => {
       </div>
 
       {/* Order Type + Slippage Row */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3">
         <div className="flex gap-4">
           <button
             id="order-type-market"
