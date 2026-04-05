@@ -4,6 +4,7 @@ import { useTradingStore } from '@/store/tradingStore';
 import { useDriftClient } from '@/hooks/useDriftClient';
 import { PERP_MARKETS } from '@/config/markets';
 import { SelectWalletModal } from './SolWallet/SelectWalletModal';
+import { DRIFT_CONFIG } from '@/config/driftConfig';
 
 export const OrderForm = () => {
   const { connected } = useWallet();
@@ -23,7 +24,8 @@ export const OrderForm = () => {
 
   const currentMarket = PERP_MARKETS.find(m => m.symbol === selectedMarket) || PERP_MARKETS[0];
   const sizeNum = parseFloat(orderSize) || 0;
-  const estimatedFee = (sizeNum * 0.001).toFixed(4); // 10 bps = 0.1%
+  const feePct = DRIFT_CONFIG.builderInfo.builderFee / 100;
+  const estimatedFee = (sizeNum * (DRIFT_CONFIG.builderInfo.builderFee / 10000)).toFixed(4); 
   const notionalValue = sizeNum; // In USDC terms
 
   const handleSubmit = async () => {
@@ -186,12 +188,12 @@ export const OrderForm = () => {
           <span className="text-white">--</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-[#8B8EA8]">Estimated Fee (0.1%)</span>
+          <span className="text-[#8B8EA8]">Estimated Fee ({feePct}%)</span>
           <span className="text-white">{sizeNum > 0 ? `${estimatedFee} USDC` : '--'}</span>
         </div>
         <div className="flex justify-between">
           <span className="text-[#8B8EA8]">Builder Fee</span>
-          <span className="text-[#00D1FF]">10 bps → SolSwap</span>
+          <span className="text-[#00D1FF]">{DRIFT_CONFIG.builderInfo.builderFee} bps → SolSwap</span>
         </div>
         <div className="flex justify-between">
           <span className="text-[#8B8EA8]">Protocol</span>
