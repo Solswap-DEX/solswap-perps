@@ -8,34 +8,58 @@ import { DRIFT_CONFIG } from '@/config/driftConfig';
 
 export const OrderForm = () => {
   const { connected } = useWallet();
-  const { placeOrder, userInitialized, initializeUser, isLoading: isDriftLoading } = useDriftClient();
+  const {
+    placeOrder,
+    enableTrading,
+    onboardingStatus,
+    isLoading: isDriftLoading,
+  } = useDriftClient();
   const {
     selectedMarket,
     orderSide, setOrderSide,
     orderType, setOrderType,
     leverage, setLeverage,
     orderSize, setOrderSize,
-    limitPrice, setLimitPrice
+    limitPrice, setLimitPrice,
   } = useTradingStore();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isEnabling, setIsEnabling] = useState(false);
   const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
   const [orderStatus, setOrderStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   const currentMarket = PERP_MARKETS.find(m => m.symbol === selectedMarket) || PERP_MARKETS[0];
   const sizeNum = parseFloat(orderSize) || 0;
   const feePct = DRIFT_CONFIG.builderInfo.builderFee / 100;
-  const estimatedFee = (sizeNum * (DRIFT_CONFIG.builderInfo.builderFee / 10000)).toFixed(4); 
+  const estimatedFee = (sizeNum * (DRIFT_CONFIG.builderInfo.builderFee / 10000)).toFixed(4);
   const notionalValue = sizeNum; // In USDC terms
 
+  // ── Enable Trading handler ─────────────────────────────────────────────────
+  const handleEnableTrading = async () => {
+    setIsEnabling(true);
+    setOrderStatus(null);
+    try {
+      await enableTrading();
+      setOrderStatus({ type: 'success', message: 'Trading enabled! You can now place orders.' });
+    } catch (err: any) {
+      setOrderStatus({ type: 'error', message: err.message || 'Failed to enable trading.' });
+    } finally {
+      setIsEnabling(false);
+    }
+  };
+
+  // ── Submit order handler ────────────────────────────────────────────────────
   const handleSubmit = async () => {
-    if (!connected) return;
+    if (!connected || onboardingStatus !== 'ready') return;
     if (sizeNum <= 0) {
       setOrderStatus({ type: 'error', message: 'Enter a valid order size' });
       return;
     }
     if (sizeNum < currentMarket.minOrderSize) {
-      setOrderStatus({ type: 'error', message: `Minimum order size is ${currentMarket.minOrderSize} ${currentMarket.baseAsset}` });
+      setOrderStatus({
+        type: 'error',
+        message: `Minimum order size is ${currentMarket.minOrderSize} ${currentMarket.baseAsset}`,
+      });
       return;
     }
     if (orderType === 'limit' && (!limitPrice || parseFloat(limitPrice) <= 0)) {
@@ -51,30 +75,21 @@ export const OrderForm = () => {
         marketIndex: currentMarket.marketIndex,
         direction: orderSide,
         size: sizeNum,
-        orderType: orderType,
+        orderType,
         limitPrice: orderType === 'limit' ? parseFloat(limitPrice) : undefined,
       });
 
       setOrderStatus({
         type: 'success',
-        message: `Order placed! TX: ${typeof txSig === 'string' ? txSig.slice(0, 16) + '...' : 'confirmed'}`
+        message: `Order placed! TX: ${typeof txSig === 'string' ? txSig.slice(0, 16) + '...' : 'confirmed'}`,
       });
       setOrderSize('');
       setLimitPrice('');
     } catch (err: any) {
       console.error('Order failed:', err);
       const msg = err.message || 'Order failed. Please try again.';
-      // Provide user-friendly messages for common errors
       if (msg.includes('insufficient')) {
         setOrderStatus({ type: 'error', message: 'Insufficient balance. Deposit USDC to your Drift account first.' });
-      } else if (msg.includes('User does not have')) {
-        setOrderStatus({ type: 'error', message: 'You need a Drift account. Initializing...' });
-        try {
-          await initializeUser();
-          setOrderStatus({ type: 'error', message: 'Account created! Please try your order again.' });
-        } catch {
-          setOrderStatus({ type: 'error', message: 'Could not create Drift account. Visit drift.trade to set up.' });
-        }
       } else {
         setOrderStatus({ type: 'error', message: msg.length > 100 ? msg.slice(0, 100) + '...' : msg });
       }
@@ -91,8 +106,8 @@ export const OrderForm = () => {
           onClick={() => setOrderSide('long')}
           className={`flex-1 py-2 rounded-md font-bold transition-all ${
             orderSide === 'long'
-            ? 'bg-[#00FFA3] text-[#05070A] shadow-lg shadow-[#00FFA3]/20'
-            : 'text-[#8B8EA8]'
+              ? 'bg-[#00FFA3] text-[#05070A] shadow-lg shadow-[#00FFA3]/20'
+              : 'text-[#8B8EA8]'
           }`}
         >
           Long
@@ -101,8 +116,8 @@ export const OrderForm = () => {
           onClick={() => setOrderSide('short')}
           className={`flex-1 py-2 rounded-md font-bold transition-all ${
             orderSide === 'short'
-            ? 'bg-[#FF4D6D] text-white shadow-lg shadow-[#FF4D6D]/20'
-            : 'text-[#8B8EA8]'
+              ? 'bg-[#FF4D6D] text-white shadow-lg shadow-[#FF4D6D]/20'
+              : 'text-[#8B8EA8]'
           }`}
         >
           Short
@@ -157,7 +172,10 @@ export const OrderForm = () => {
           </div>
           <div className="grid grid-cols-4 gap-2 mt-1">
             {['25%', '50%', '75%', '100%'].map((pct) => (
-              <button key={pct} className="bg-[#0D1117] text-[10px] py-1 rounded border border-[#2D2E42] text-[#8B8EA8] hover:border-[#00D1FF] transition-colors">
+              <button
+                key={pct}
+                className="bg-[#0D1117] text-[10px] py-1 rounded border border-[#2D2E42] text-[#8B8EA8] hover:border-[#00D1FF] transition-colors"
+              >
                 {pct}
               </button>
             ))}
@@ -165,7 +183,7 @@ export const OrderForm = () => {
         </div>
       </div>
 
-      {/* Leverage Slider */}
+      {/* Leverage */}
       <div className="flex flex-col gap-4">
         <div className="flex justify-between items-center text-xs">
           <span className="text-[#8B8EA8] font-bold uppercase">Leverage</span>
@@ -203,16 +221,20 @@ export const OrderForm = () => {
 
       {/* Status Message */}
       {orderStatus && (
-        <div className={`p-3 rounded-lg text-xs font-medium ${
-          orderStatus.type === 'success'
-            ? 'bg-[#00FFA3]/10 text-[#00FFA3] border border-[#00FFA3]/20'
-            : 'bg-[#FF4D6D]/10 text-[#FF4D6D] border border-[#FF4D6D]/20'
-        }`}>
+        <div
+          className={`p-3 rounded-lg text-xs font-medium ${
+            orderStatus.type === 'success'
+              ? 'bg-[#00FFA3]/10 text-[#00FFA3] border border-[#00FFA3]/20'
+              : 'bg-[#FF4D6D]/10 text-[#FF4D6D] border border-[#FF4D6D]/20'
+          }`}
+        >
           {orderStatus.message}
         </div>
       )}
 
-      {/* Submit Button or Connect Wallet */}
+      {/* ── CTA Buttons ───────────────────────────────────────────────────────── */}
+
+      {/* 1. Not connected → show Connect Wallet */}
       {!connected ? (
         <div className="w-full flex justify-center">
           <button
@@ -223,10 +245,38 @@ export const OrderForm = () => {
           </button>
           <SelectWalletModal isOpen={isWalletModalOpen} onClose={() => setIsWalletModalOpen(false)} />
         </div>
+
+      // 2. Connected but needs onboarding or escrow → Enable Trading
+      ) : onboardingStatus === 'needs_onboarding' || onboardingStatus === 'needs_escrow' ? (
+        <button
+          onClick={handleEnableTrading}
+          disabled={isEnabling || isDriftLoading}
+          className="w-full py-4 rounded-xl font-bold text-lg bg-[#7B61FF] text-white hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isEnabling ? (
+            <div className="flex items-center justify-center gap-2">
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+              <span>Setting up trading account…</span>
+            </div>
+          ) : (
+            '⚡ Enable Trading'
+          )}
+        </button>
+
+      // 3. Checking status
+      ) : onboardingStatus === 'checking' || isDriftLoading ? (
+        <button disabled className="w-full py-4 rounded-xl font-bold text-lg bg-[#1A1B2E] text-[#8B8EA8] cursor-not-allowed">
+          <div className="flex items-center justify-center gap-2">
+            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-[#8B8EA8]"></div>
+            <span>Connecting to Drift…</span>
+          </div>
+        </button>
+
+      // 4. Ready → place order
       ) : (
         <button
           onClick={handleSubmit}
-          disabled={isSubmitting || isDriftLoading || sizeNum <= 0}
+          disabled={isSubmitting || sizeNum <= 0}
           className={`w-full py-4 rounded-xl font-bold text-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
             orderSide === 'long'
               ? 'bg-[#00FFA3] text-[#05070A] hover:opacity-90'
@@ -236,10 +286,8 @@ export const OrderForm = () => {
           {isSubmitting ? (
             <div className="flex items-center justify-center gap-2">
               <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-current"></div>
-              <span>Placing Order...</span>
+              <span>Placing Order…</span>
             </div>
-          ) : isDriftLoading ? (
-            'Connecting to Drift...'
           ) : (
             `Open ${orderSide === 'long' ? 'Long' : 'Short'} ${currentMarket.baseAsset}`
           )}
