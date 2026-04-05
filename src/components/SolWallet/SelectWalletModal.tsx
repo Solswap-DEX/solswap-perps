@@ -13,6 +13,8 @@ export const SelectWalletModal: React.FC<SelectWalletModalProps> = ({ isOpen, on
   const [showUninstalled, setShowUninstalled] = useState(false);
   const uninstalledWallets = wallets.filter((w) => w.readyState === WalletReadyState.NotDetected || w.readyState === WalletReadyState.Unsupported);
 
+  if (!isOpen) return null;
+
   const handleConnect = (walletName: any) => {
     select(walletName);
     onClose();
