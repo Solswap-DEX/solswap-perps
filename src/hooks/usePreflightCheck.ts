@@ -18,7 +18,7 @@
  */
 
 import { useRef, useCallback } from 'react';
-import { PublicKey } from '@solana/web3.js';
+import { Connection, PublicKey } from '@solana/web3.js';
 import { Buffer } from 'buffer';
 import { DRIFT_CONFIG } from '@/config/driftConfig';
 
