@@ -5,7 +5,71 @@ import { useDriftClient } from '@/hooks/useDriftClient';
 import { PERP_MARKETS } from '@/config/markets';
 import { SelectWalletModal } from './SolWallet/SelectWalletModal';
 import { DRIFT_CONFIG } from '@/config/driftConfig';
+import { OrderStatusBar, OrderStatusState } from './OrderStatusBar';
+import {
+  trackTradeSubmitted,
+  trackTradeConfirmed,
+  trackTradeFailed,
+  track,
+} from '@/utils/analytics';
 
+// ─── Slippage options ─────────────────────────────────────────────────────────
+const SLIPPAGE_OPTIONS: Array<{ label: string; value: number }> = [
+  { label: '0.1%', value: 0.001 },
+  { label: '0.5%', value: 0.005 },
+  { label: '1%',   value: 0.01  },
+];
+
+// ─── Fee tooltip ──────────────────────────────────────────────────────────────
+function FeeTooltip() {
+  const [visible, setVisible] = useState(false);
+  return (
+    <span style={{ position: 'relative', display: 'inline-block' }}>
+      <button
+        onMouseEnter={() => setVisible(true)}
+        onMouseLeave={() => setVisible(false)}
+        onFocus={() => setVisible(true)}
+        onBlur={() => setVisible(false)}
+        style={{
+          background: 'none',
+          border: 'none',
+          cursor: 'help',
+          color: '#00D1FF80',
+          fontSize: '10px',
+          padding: '0 4px',
+        }}
+        aria-label="About SolSwap fee"
+      >
+        ℹ
+      </button>
+      {visible && (
+        <span
+          style={{
+            position: 'absolute',
+            bottom: '120%',
+            right: 0,
+            width: '220px',
+            background: '#0D1117',
+            border: '1px solid #7B61FF30',
+            borderRadius: '8px',
+            padding: '10px',
+            fontSize: '11px',
+            color: '#8B8EA8',
+            zIndex: 50,
+            lineHeight: '1.5',
+            boxShadow: '0 4px 24px rgba(0,0,0,0.5)',
+            pointerEvents: 'none',
+          }}
+        >
+          This fee funds SolSwap&apos;s routing engine, execution optimization, and
+          platform infrastructure — enabling the best fills on Drift Protocol.
+        </span>
+      )}
+    </span>
+  );
+}
+
+// ─── Main Component ───────────────────────────────────────────────────────────
 export const OrderForm = () => {
   const { connected } = useWallet();
   const {
@@ -23,26 +87,42 @@ export const OrderForm = () => {
     limitPrice, setLimitPrice,
   } = useTradingStore();
 
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isEnabling, setIsEnabling] = useState(false);
+  const [isSubmitting, setIsSubmitting]   = useState(false);
+  const [isEnabling, setIsEnabling]       = useState(false);
   const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
-  const [orderStatus, setOrderStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [orderStatusState, setOrderStatusState] = useState<OrderStatusState>({ status: 'idle' });
+
+  // Slippage
+  const [slippage, setSlippage] = useState<number>(0.005); // default 0.5%
+  const [customSlippage, setCustomSlippage] = useState<string>('');
+  const [showCustom, setShowCustom] = useState(false);
 
   const currentMarket = PERP_MARKETS.find(m => m.symbol === selectedMarket) || PERP_MARKETS[0];
-  const sizeNum = parseFloat(orderSize) || 0;
-  const feePct = DRIFT_CONFIG.builderInfo.builderFee / 100;
-  const estimatedFee = (sizeNum * (DRIFT_CONFIG.builderInfo.builderFee / 10000)).toFixed(4);
-  const notionalValue = sizeNum; // In USDC terms
+  const sizeNum       = parseFloat(orderSize) || 0;
 
-  // ── Enable Trading handler ─────────────────────────────────────────────────
+  // Fee breakdown
+  const builtFeePercent   = DRIFT_CONFIG.builderInfo.builderFee / 100;       // e.g. 0.10%
+  const driftFeePercent   = 0.01;                                             // ~0.01% protocol fee
+  const estimatedBuilderFee = (sizeNum * (DRIFT_CONFIG.builderInfo.builderFee / 10000)).toFixed(4);
+  const estimatedDriftFee   = (sizeNum * (driftFeePercent / 100)).toFixed(4);
+  const estimatedTotalFee   = ((sizeNum * (DRIFT_CONFIG.builderInfo.builderFee / 10000)) +
+                               (sizeNum * (driftFeePercent / 100))).toFixed(4);
+
+  // Effective slippage value (custom overrides preset)
+  const effectiveSlippage = showCustom
+    ? (parseFloat(customSlippage) || 0) / 100
+    : slippage;
+
+  // ── Enable Trading handler ──────────────────────────────────────────────────
   const handleEnableTrading = async () => {
     setIsEnabling(true);
-    setOrderStatus(null);
+    setOrderStatusState({ status: 'pending', label: 'Setting up trading account…' });
+    track('enable_trading_clicked');
     try {
       await enableTrading();
-      setOrderStatus({ type: 'success', message: 'Trading enabled! You can now place orders.' });
+      setOrderStatusState({ status: 'idle' }); // Clear — button will change state
     } catch (err: any) {
-      setOrderStatus({ type: 'error', message: err.message || 'Failed to enable trading.' });
+      setOrderStatusState({ status: 'error', message: err.message || 'Failed to enable trading.' });
     } finally {
       setIsEnabling(false);
     }
@@ -52,25 +132,34 @@ export const OrderForm = () => {
   const handleSubmit = async () => {
     if (!connected || onboardingStatus !== 'ready') return;
     if (sizeNum <= 0) {
-      setOrderStatus({ type: 'error', message: 'Enter a valid order size' });
+      setOrderStatusState({ status: 'error', message: 'Enter a valid order size.' });
       return;
     }
     if (sizeNum < currentMarket.minOrderSize) {
-      setOrderStatus({
-        type: 'error',
+      setOrderStatusState({
+        status: 'error',
         message: `Minimum order size is ${currentMarket.minOrderSize} ${currentMarket.baseAsset}`,
       });
       return;
     }
     if (orderType === 'limit' && (!limitPrice || parseFloat(limitPrice) <= 0)) {
-      setOrderStatus({ type: 'error', message: 'Enter a valid limit price' });
+      setOrderStatusState({ status: 'error', message: 'Enter a valid limit price.' });
       return;
     }
 
     setIsSubmitting(true);
-    setOrderStatus(null);
+    setOrderStatusState({ status: 'pending', label: 'Signing transaction…' });
+
+    trackTradeSubmitted({
+      market: currentMarket.symbol,
+      side: orderSide,
+      size: sizeNum,
+      orderType,
+    });
 
     try {
+      setOrderStatusState({ status: 'signing' });
+
       const txSig = await placeOrder({
         marketIndex: currentMarket.marketIndex,
         direction: orderSide,
@@ -79,20 +168,16 @@ export const OrderForm = () => {
         limitPrice: orderType === 'limit' ? parseFloat(limitPrice) : undefined,
       });
 
-      setOrderStatus({
-        type: 'success',
-        message: `Order placed! TX: ${typeof txSig === 'string' ? txSig.slice(0, 16) + '...' : 'confirmed'}`,
-      });
+      const sig = typeof txSig === 'string' ? txSig : String(txSig);
+      trackTradeConfirmed(sig, currentMarket.symbol);
+      setOrderStatusState({ status: 'success', txSig: sig, market: currentMarket.symbol });
       setOrderSize('');
       setLimitPrice('');
     } catch (err: any) {
       console.error('Order failed:', err);
       const msg = err.message || 'Order failed. Please try again.';
-      if (msg.includes('insufficient')) {
-        setOrderStatus({ type: 'error', message: 'Insufficient balance. Deposit USDC to your Drift account first.' });
-      } else {
-        setOrderStatus({ type: 'error', message: msg.length > 100 ? msg.slice(0, 100) + '...' : msg });
-      }
+      trackTradeFailed(msg, currentMarket.symbol);
+      setOrderStatusState({ status: 'error', message: msg });
     } finally {
       setIsSubmitting(false);
     }
@@ -103,6 +188,7 @@ export const OrderForm = () => {
       {/* Long/Short Toggle */}
       <div className="flex bg-[#05070A] p-1 rounded-lg">
         <button
+          id="order-side-long"
           onClick={() => setOrderSide('long')}
           className={`flex-1 py-2 rounded-md font-bold transition-all ${
             orderSide === 'long'
@@ -113,6 +199,7 @@ export const OrderForm = () => {
           Long
         </button>
         <button
+          id="order-side-short"
           onClick={() => setOrderSide('short')}
           className={`flex-1 py-2 rounded-md font-bold transition-all ${
             orderSide === 'short'
@@ -124,20 +211,82 @@ export const OrderForm = () => {
         </button>
       </div>
 
-      {/* Order Type */}
-      <div className="flex gap-4">
-        <button
-          onClick={() => setOrderType('market')}
-          className={`text-sm font-bold ${orderType === 'market' ? 'text-[#00D1FF]' : 'text-[#8B8EA8]'}`}
-        >
-          Market
-        </button>
-        <button
-          onClick={() => setOrderType('limit')}
-          className={`text-sm font-bold ${orderType === 'limit' ? 'text-[#00D1FF]' : 'text-[#8B8EA8]'}`}
-        >
-          Limit
-        </button>
+      {/* Order Type + Slippage Row */}
+      <div className="flex items-center justify-between">
+        <div className="flex gap-4">
+          <button
+            id="order-type-market"
+            onClick={() => setOrderType('market')}
+            className={`text-sm font-bold ${orderType === 'market' ? 'text-[#00D1FF]' : 'text-[#8B8EA8]'}`}
+          >
+            Market
+          </button>
+          <button
+            id="order-type-limit"
+            onClick={() => setOrderType('limit')}
+            className={`text-sm font-bold ${orderType === 'limit' ? 'text-[#00D1FF]' : 'text-[#8B8EA8]'}`}
+          >
+            Limit
+          </button>
+        </div>
+
+        {/* Slippage Selector */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px' }}>
+          <span style={{ color: '#8B8EA8' }}>Slippage:</span>
+          {SLIPPAGE_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              onClick={() => { setSlippage(opt.value); setShowCustom(false); }}
+              style={{
+                padding: '2px 7px',
+                borderRadius: '6px',
+                border: `1px solid ${!showCustom && slippage === opt.value ? '#00D1FF' : '#2D2E42'}`,
+                background: !showCustom && slippage === opt.value ? '#00D1FF15' : 'transparent',
+                color: !showCustom && slippage === opt.value ? '#00D1FF' : '#8B8EA8',
+                cursor: 'pointer',
+                fontWeight: 600,
+                transition: 'all 0.15s',
+              }}
+            >
+              {opt.label}
+            </button>
+          ))}
+          <button
+            onClick={() => setShowCustom(true)}
+            style={{
+              padding: '2px 7px',
+              borderRadius: '6px',
+              border: `1px solid ${showCustom ? '#7B61FF' : '#2D2E42'}`,
+              background: showCustom ? '#7B61FF15' : 'transparent',
+              color: showCustom ? '#7B61FF' : '#8B8EA8',
+              cursor: 'pointer',
+              fontWeight: 600,
+              transition: 'all 0.15s',
+            }}
+          >
+            {showCustom ? (
+              <input
+                type="number"
+                value={customSlippage}
+                onChange={(e) => setCustomSlippage(e.target.value)}
+                placeholder="0.5"
+                style={{
+                  width: '40px',
+                  background: 'transparent',
+                  border: 'none',
+                  color: '#7B61FF',
+                  fontSize: '11px',
+                  outline: 'none',
+                  textAlign: 'center',
+                }}
+                autoFocus
+              />
+            ) : (
+              'Custom'
+            )}
+          </button>
+          {showCustom && <span style={{ color: '#8B8EA8' }}>%</span>}
+        </div>
       </div>
 
       {/* Inputs */}
@@ -147,6 +296,7 @@ export const OrderForm = () => {
             <label className="text-xs text-[#8B8EA8] font-bold uppercase">Price</label>
             <div className="relative">
               <input
+                id="order-limit-price"
                 type="number"
                 value={limitPrice}
                 onChange={(e) => setLimitPrice(e.target.value)}
@@ -162,6 +312,7 @@ export const OrderForm = () => {
           <label className="text-xs text-[#8B8EA8] font-bold uppercase">Size</label>
           <div className="relative">
             <input
+              id="order-size"
               type="number"
               value={orderSize}
               onChange={(e) => setOrderSize(e.target.value)}
@@ -190,6 +341,7 @@ export const OrderForm = () => {
           <span className="text-[#00D1FF] font-bold">{leverage}x</span>
         </div>
         <input
+          id="order-leverage"
           type="range"
           min="1"
           max="20"
@@ -199,38 +351,63 @@ export const OrderForm = () => {
         />
       </div>
 
-      {/* Summary */}
+      {/* ── Fee Breakdown Summary ──────────────────────────────────────────────── */}
       <div className="bg-[#0D1117] rounded-lg p-3 flex flex-col gap-2 text-[11px]">
         <div className="flex justify-between">
           <span className="text-[#8B8EA8]">Liquidation Price</span>
           <span className="text-white">--</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-[#8B8EA8]">Estimated Fee ({feePct}%)</span>
-          <span className="text-white">{sizeNum > 0 ? `${estimatedFee} USDC` : '--'}</span>
+          <span className="text-[#8B8EA8]">Slippage Tolerance</span>
+          <span className="text-[#00D1FF]">{(effectiveSlippage * 100).toFixed(2)}%</span>
         </div>
+
+        {/* Drift Protocol Fee */}
         <div className="flex justify-between">
-          <span className="text-[#8B8EA8]">Builder Fee</span>
-          <span className="text-[#00D1FF]">{DRIFT_CONFIG.builderInfo.builderFee} bps → SolSwap</span>
+          <span className="text-[#8B8EA8]">Drift Protocol Fee (~{driftFeePercent}%)</span>
+          <span className="text-white">{sizeNum > 0 ? `${estimatedDriftFee} USDC` : '--'}</span>
         </div>
-        <div className="flex justify-between">
-          <span className="text-[#8B8EA8]">Protocol</span>
-          <span className="text-[#00D1FF]">Drift v2</span>
+
+        {/* SolSwap Fee — presented as a value-add, not a tax */}
+        <div className="flex justify-between items-center">
+          <span className="text-[#8B8EA8]">
+            SolSwap Fee ({builtFeePercent.toFixed(2)}%)
+            <FeeTooltip />
+          </span>
+          <span className="text-[#00D1FF]">
+            {sizeNum > 0 ? `${estimatedBuilderFee} USDC` : '--'}
+          </span>
+        </div>
+
+        {/* Total estimated fee */}
+        {sizeNum > 0 && (
+          <>
+            <div style={{ height: '1px', background: '#2D2E42', margin: '2px 0' }} />
+            <div className="flex justify-between">
+              <span className="text-[#8B8EA8] font-bold">Total Est. Fee</span>
+              <span className="text-white font-bold">{estimatedTotalFee} USDC</span>
+            </div>
+          </>
+        )}
+
+        {/* Value proposition callout, subtle */}
+        <div
+          style={{
+            marginTop: '4px',
+            fontSize: '10px',
+            color: '#7B61FF80',
+            letterSpacing: '0.02em',
+          }}
+        >
+          ⚡ Powered by SolSwap — smart routing &amp; best execution on Drift
         </div>
       </div>
 
-      {/* Status Message */}
-      {orderStatus && (
-        <div
-          className={`p-3 rounded-lg text-xs font-medium ${
-            orderStatus.type === 'success'
-              ? 'bg-[#00FFA3]/10 text-[#00FFA3] border border-[#00FFA3]/20'
-              : 'bg-[#FF4D6D]/10 text-[#FF4D6D] border border-[#FF4D6D]/20'
-          }`}
-        >
-          {orderStatus.message}
-        </div>
-      )}
+      {/* Order Status Bar */}
+      <OrderStatusBar
+        state={orderStatusState}
+        onDismiss={() => setOrderStatusState({ status: 'idle' })}
+      />
 
       {/* ── CTA Buttons ───────────────────────────────────────────────────────── */}
 
@@ -238,6 +415,7 @@ export const OrderForm = () => {
       {!connected ? (
         <div className="w-full flex justify-center">
           <button
+            id="connect-wallet-btn"
             onClick={() => setIsWalletModalOpen(true)}
             className="w-full py-4 rounded-xl font-bold text-lg bg-[#00D1FF] text-[#05070A] hover:opacity-90 transition-all"
           >
@@ -249,6 +427,7 @@ export const OrderForm = () => {
       // 2. Connected but needs onboarding or escrow → Enable Trading
       ) : onboardingStatus === 'needs_onboarding' || onboardingStatus === 'needs_escrow' ? (
         <button
+          id="enable-trading-btn"
           onClick={handleEnableTrading}
           disabled={isEnabling || isDriftLoading}
           className="w-full py-4 rounded-xl font-bold text-lg bg-[#7B61FF] text-white hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
@@ -265,7 +444,7 @@ export const OrderForm = () => {
 
       // 3. Checking status
       ) : onboardingStatus === 'checking' || isDriftLoading ? (
-        <button disabled className="w-full py-4 rounded-xl font-bold text-lg bg-[#1A1B2E] text-[#8B8EA8] cursor-not-allowed">
+        <button id="connecting-btn" disabled className="w-full py-4 rounded-xl font-bold text-lg bg-[#1A1B2E] text-[#8B8EA8] cursor-not-allowed">
           <div className="flex items-center justify-center gap-2">
             <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-[#8B8EA8]"></div>
             <span>Connecting to Drift…</span>
@@ -275,6 +454,7 @@ export const OrderForm = () => {
       // 4. Ready → place order
       ) : (
         <button
+          id="place-order-btn"
           onClick={handleSubmit}
           disabled={isSubmitting || sizeNum <= 0}
           className={`w-full py-4 rounded-xl font-bold text-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed ${

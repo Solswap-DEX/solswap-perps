@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useAnchorWallet, useConnection } from '@solana/wallet-adapter-react';
 import { Buffer } from 'buffer';
 import {
@@ -8,31 +8,31 @@ import {
   PositionDirection,
   OrderType,
   MarketType,
-  getUserStatsAccountPublicKey,
   getRevenueShareEscrowAccountPublicKey,
 } from '@drift-labs/sdk/lib/browser';
 import { Connection, Keypair, PublicKey } from '@solana/web3.js';
 import { DRIFT_CONFIG } from '@/config/driftConfig';
+import { usePreflightCheck } from '@/hooks/usePreflightCheck';
+import { useOnboardingStore } from '@/store/useOnboardingStore';
+import { sendWithRetry } from '@/utils/tx/sendWithRetry';
+import { track, trackWalletConnected } from '@/utils/analytics';
 
 if (typeof window !== 'undefined') {
   (window as any).Buffer = Buffer;
 }
 
-// How many revenue-share slots to pre-allocate for the escrow account.
-// 10 is enough for any regular user. Costs ~0.002 SOL one-time.
+// Pre-allocate 10 revenue-share slots. Costs ~0.002 SOL one-time.
 const ESCROW_NUM_ORDERS = 10;
 
-// maxFeeTenthBps: the fee in "tenth of a basis point" units.
-// DRIFT_CONFIG.builderInfo.builderFee is in BPS (e.g. 10 bps = 0.10%).
-// changeApprovedBuilder expects tenth-bps, so we multiply by 10.
+// changeApprovedBuilder expects tenth-bps units
 const MAX_FEE_TENTH_BPS = DRIFT_CONFIG.builderInfo.builderFee * 10;
 
 export type OnboardingStatus =
   | 'idle'
   | 'checking'
-  | 'needs_onboarding'     // user has no Drift account at all
-  | 'needs_escrow'         // has Drift account but no revenue share escrow
-  | 'ready';               // fully onboarded, trading can begin
+  | 'needs_onboarding'     // no Drift account yet
+  | 'needs_escrow'         // has Drift account, no revenue share escrow
+  | 'ready';               // fully onboarded
 
 export const useDriftClient = () => {
   const { connection } = useConnection();
@@ -45,6 +45,12 @@ export const useDriftClient = () => {
   const [escrowInitialized, setEscrowInitialized] = useState(false);
   const [onboardingStatus, setOnboardingStatus] = useState<OnboardingStatus>('idle');
 
+  // Persistent onboarding cache (survives page reloads)
+  const { markReady, invalidate: invalidateCache, isFresh } = useOnboardingStore();
+
+  // Track previous wallet to detect changes
+  const prevWalletRef = useRef<string | null>(null);
+
   // ─── 1. Initialize DriftClient ──────────────────────────────────────────────
   useEffect(() => {
     let client: DriftClient | null = null;
@@ -53,13 +59,21 @@ export const useDriftClient = () => {
       setIsLoading(true);
       setError(null);
 
+      // Detect wallet change → invalidate cached state
+      const currentWallet = wallet?.publicKey?.toBase58() ?? null;
+      if (prevWalletRef.current && prevWalletRef.current !== currentWallet) {
+        invalidateCache('wallet_changed');
+        track('wallet_disconnected', { prev: prevWalletRef.current?.slice(0, 8) });
+      }
+      prevWalletRef.current = currentWallet;
+
       try {
         const driftConnection = new Connection(DRIFT_CONFIG.rpcUrl, {
           wsEndpoint: DRIFT_CONFIG.wsUrl,
           commitment: 'confirmed',
         });
 
-        // Use a dummy wallet when the user is not connected so charts & prices load.
+        // Use a dummy wallet when not connected so charts & prices still load
         const providerWallet = wallet || {
           publicKey: Keypair.generate().publicKey,
           signTransaction: async (tx: any) => tx,
@@ -78,6 +92,18 @@ export const useDriftClient = () => {
 
         // ── Check onboarding state for real wallets ──────────────────────────
         if (wallet) {
+          const walletAddress = wallet.publicKey.toBase58();
+          trackWalletConnected(walletAddress);
+
+          // Fast path: use persistent cache if still fresh
+          if (isFresh(walletAddress)) {
+            setUserInitialized(true);
+            setEscrowInitialized(true);
+            setOnboardingStatus('ready');
+            setIsLoading(false);
+            return;
+          }
+
           setOnboardingStatus('checking');
 
           const hasUser = client.hasUser();
@@ -97,7 +123,17 @@ export const useDriftClient = () => {
           const hasEscrow = !!escrowInfo;
           setEscrowInitialized(hasEscrow);
 
-          setOnboardingStatus(hasEscrow ? 'ready' : 'needs_escrow');
+          if (hasEscrow) {
+            setOnboardingStatus('ready');
+            // Update persistent cache
+            markReady(
+              walletAddress,
+              DRIFT_CONFIG.builderInfo.builder.toBase58(),
+              MAX_FEE_TENTH_BPS
+            );
+          } else {
+            setOnboardingStatus('needs_escrow');
+          }
         }
       } catch (err: any) {
         console.error('Failed to init DriftClient:', err);
@@ -116,23 +152,14 @@ export const useDriftClient = () => {
 
   // ─── 2. Unified "Enable Trading" onboarding ─────────────────────────────────
   /**
-   * Handles all onboarding in one atomic transaction batch.
-   *
-   * FLOW A — Brand new user (no Drift account):
-   *   ix[0]: initializeUserStats  (only for sub-account 0)
-   *   ix[1]: initializeUser
-   *   ix[2]: initializeRevenueShareEscrow
-   *   ix[3]: changeApprovedBuilder  → approves SolSwap as their builder
-   *
-   * FLOW B — Existing user without escrow:
-   *   ix[0]: initializeRevenueShareEscrow
-   *   ix[1]: changeApprovedBuilder
-   *
-   * Both flows culminate in a SINGLE wallet signature prompt.
+   * FLOW A — Brand new user: initializeUserStats + initializeUser +
+   *           initializeRevenueShareEscrow + changeApprovedBuilder (1 tx)
+   * FLOW B — Existing user without escrow: initializeRevenueShareEscrow +
+   *           changeApprovedBuilder (1 tx)
    */
   const enableTrading = useCallback(async () => {
     if (!driftClient || !wallet) throw new Error('Wallet not connected');
-    if (onboardingStatus === 'ready') return; // nothing to do
+    if (onboardingStatus === 'ready') return;
 
     setIsLoading(true);
     setError(null);
@@ -142,12 +169,10 @@ export const useDriftClient = () => {
       const instructions: any[] = [];
 
       if (onboardingStatus === 'needs_onboarding') {
-        // ── FLOW A: full initialization ──────────────────────────────────────
         const [initIxs] = await (driftClient as any).getInitializeUserAccountIxs(0);
         instructions.push(...initIxs);
       }
 
-      // Escrow + builder approval (both flows)
       const escrowIx = await (driftClient as any).getInitializeRevenueShareEscrowIx(
         wallet.publicKey,
         ESCROW_NUM_ORDERS
@@ -157,37 +182,51 @@ export const useDriftClient = () => {
       const changeBuilderIx = await (driftClient as any).getChangeApprovedBuilderIx(
         builderPublicKey,
         MAX_FEE_TENTH_BPS,
-        true // add = true → register / update the builder
+        true
       );
       instructions.push(changeBuilderIx);
 
-      // Build and send as a single transaction
       const tx = await (driftClient as any).buildTransaction(instructions);
-      const { txSig } = await (driftClient as any).sendTransaction(tx, [], driftClient.opts);
 
-      console.info('Onboarding tx:', txSig);
+      // Use sendWithRetry for improved success rate
+      const txSig = await sendWithRetry(driftClient, tx);
+      console.info('[enableTrading] Onboarding tx:', txSig);
+      track('escrow_initialized', { txSig: txSig.slice(0, 16) });
 
-      // Update local state
       if (onboardingStatus === 'needs_onboarding') {
         await driftClient.addUser(0);
         setUserInitialized(true);
       }
       setEscrowInitialized(true);
       setOnboardingStatus('ready');
+      track('builder_approved', { builder: DRIFT_CONFIG.builderInfo.builder.toBase58().slice(0, 8) });
+
+      // Persist to cache
+      markReady(
+        wallet.publicKey.toBase58(),
+        builderPublicKey.toBase58(),
+        MAX_FEE_TENTH_BPS
+      );
 
       return txSig;
     } catch (err: any) {
       console.error('enableTrading failed:', err);
 
-      // If the escrow already exists on-chain (race condition / stale check),
-      // just mark it as ready instead of surfacing the error to the user.
       if (
         err.message?.includes('already in use') ||
         err.message?.includes('already initialized')
       ) {
+        // Escrow already exists (race / stale check) — just mark ready
         setEscrowInitialized(true);
         setUserInitialized(true);
         setOnboardingStatus('ready');
+        if (wallet) {
+          markReady(
+            wallet.publicKey.toBase58(),
+            DRIFT_CONFIG.builderInfo.builder.toBase58(),
+            MAX_FEE_TENTH_BPS
+          );
+        }
         return;
       }
 
@@ -198,7 +237,9 @@ export const useDriftClient = () => {
     }
   }, [driftClient, wallet, onboardingStatus]);
 
-  // ─── 3. Place order (only callable when onboarding is complete) ──────────────
+  // ─── 3. Place order ──────────────────────────────────────────────────────────
+  const { runCheck: runPreflightCheck, invalidate: invalidatePreflight } = usePreflightCheck();
+
   const placeOrder = useCallback(async (params: {
     marketIndex: number;
     direction: 'long' | 'short';
@@ -210,6 +251,9 @@ export const useDriftClient = () => {
     if (onboardingStatus !== 'ready') {
       throw new Error('Please complete trading setup first');
     }
+
+    // Pre-flight: verify escrow + builder approval (cached 5 min)
+    await runPreflightCheck(driftClient, wallet.publicKey, enableTrading);
 
     const direction =
       params.direction === 'long' ? PositionDirection.LONG : PositionDirection.SHORT;
@@ -223,7 +267,6 @@ export const useDriftClient = () => {
       direction,
       baseAssetAmount,
       reduceOnly: false,
-      // Builder info is required for revenue share to actually be collected
       builderInfo: DRIFT_CONFIG.builderInfo,
     };
 
@@ -231,6 +274,16 @@ export const useDriftClient = () => {
       orderParams.price = new BN(Math.round(params.limitPrice * 1e6));
     }
 
+    // Use sendWithRetry for improved success rate on place-order tx
+    const placeTx = await (driftClient as any).buildTransaction(
+      [await (driftClient as any).getPlacePerpOrderIx(orderParams)]
+    ).catch(() => null);
+
+    if (placeTx) {
+      return await sendWithRetry(driftClient, placeTx);
+    }
+
+    // Fallback to native SDK call if we cannot extract the ix
     return await driftClient.placePerpOrder(orderParams);
   }, [driftClient, wallet, onboardingStatus]);
 
@@ -261,7 +314,6 @@ export const useDriftClient = () => {
     isConnected,
     isLoading,
     error,
-    // Legacy field kept so existing components don't break
     userInitialized: onboardingStatus === 'ready',
     escrowInitialized,
     onboardingStatus,
