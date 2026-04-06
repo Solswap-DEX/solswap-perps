@@ -132,7 +132,6 @@ export const NetworkStatusBar = () => {
             )}
           </div>
         )}
-      </div>
 
         {/* Slot Indicator */}
         {slot !== null && (
