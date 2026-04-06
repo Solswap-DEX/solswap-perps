@@ -22,7 +22,7 @@ const TradePage = () => {
   const [timeframe, setTimeframe] = useState('1h');
   const [footerTab, setFooterTab] = useState<FooterTab>('positions');
   const currentMarket = PERP_MARKETS.find(m => m.symbol === selectedMarket) || PERP_MARKETS[0];
-  const { currentPrice } = useMarketData(currentMarket.geckoPool, timeframe);
+  const { currentPrice, priceChange24h } = useMarketData(currentMarket.geckoPool, timeframe);
   const { orderBook } = useOrderBook(currentPrice ?? null);
 
   const [trades, setTrades] = useState<any[]>([]);
