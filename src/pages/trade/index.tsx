@@ -93,7 +93,7 @@ const TradePage = () => {
           
           <div className="flex-1 flex flex-col lg:flex-row overflow-y-auto lg:overflow-hidden min-h-0">
             {/* Chart Area */}
-            <div className="w-full lg:flex-1 relative border-b lg:border-b-0 lg:border-r border-[#0D1117] h-[450px] lg:h-auto min-h-[450px] lg:min-h-0 min-w-0 flex-shrink-0">
+            <div className="w-full lg:flex-1 relative border-b lg:border-b-0 lg:border-r border-[#0D1117] h-[450px] lg:h-[520px] lg:max-h-[520px] min-h-[450px] lg:min-h-0 min-w-0 flex-shrink-0">
               <div className="absolute inset-0 w-full h-full">
                 <TradingView pool={currentMarket.geckoPool} timeframe={timeframe} />
               </div>
