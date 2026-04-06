@@ -45,8 +45,8 @@ export const NetworkStatusBar = () => {
   useEffect(() => {
     let subscriptionId: number;
     if (connection) {
-      subscriptionId = connection.onSlotChange((newSlot) => {
-        setSlot(newSlot);
+      subscriptionId = connection.onSlotChange((slotInfo) => {
+        setSlot(slotInfo.slot);
       });
       connection.getSlot().then(setSlot).catch(() => {});
     }
