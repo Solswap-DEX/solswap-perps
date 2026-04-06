@@ -92,12 +92,12 @@ export const NetworkStatusBar = () => {
         {/* RPC Provider & Latency */}
         {isOnline && (
           <div className="flex items-center space-x-2 border-l border-white/10 pl-6">
-            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="opacity-70">
-              <path d="M5 12.55a11 11 0 0 1 14.08 0"></path>
-              <path d="M1.42 9a16 16 0 0 1 21.16 0"></path>
-              <path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path>
-              <line x1="12" y1="20" x2="12.01" y2="20"></line>
-            </svg>
+            {/* Signal Bars Icon */}
+            <div className="flex items-end space-x-[2px] h-3.5 mr-1">
+              <div className={`w-[3px] rounded-sm h-1.5 ${latency === null ? 'bg-gray-700' : latency >= 500 ? 'bg-red-500' : latency >= 250 ? 'bg-yellow-500' : 'bg-green-500'}`}></div>
+              <div className={`w-[3px] rounded-sm h-2.5 ${latency === null || latency >= 500 ? 'bg-gray-700' : latency >= 250 ? 'bg-yellow-500' : 'bg-green-500'}`}></div>
+              <div className={`w-[3px] rounded-sm h-3.5 ${latency === null || latency >= 250 ? 'bg-gray-700' : 'bg-green-500'}`}></div>
+            </div>
             <span>RPC: <span className="text-gray-300">{providerName}</span></span>
             {latency !== null && (
               <span className="text-gray-500 text-[10px] ml-1">({latency}ms)</span>
