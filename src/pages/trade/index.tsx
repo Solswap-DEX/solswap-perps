@@ -128,7 +128,7 @@ const TradePage = () => {
                   <div className="text-[12px] font-bold text-[#8B8EA8] uppercase tracking-wider">Order Book</div>
                 </div>
                 <div className="flex-1 overflow-y-auto no-scrollbar p-3 font-mono text-xs">
-                  <div className="grid grid-cols-3 text-[#525465] mb-2 uppercase text-[11px] sticky top-0 bg-[#05070A] py-1 z-10 border-b border-[#0D1117]/50">
+                  <div className="grid grid-cols-3 text-[#9DA0B8] mb-2 uppercase text-[11px] sticky top-0 bg-[#05070A] py-1 z-10 border-b border-[#0D1117]/50">
                       <span>Price (USDC)</span>
                       <span className="text-right">Size ({currentMarket.baseAsset})</span>
                       <span className="text-right">Total</span>
@@ -159,7 +159,7 @@ const TradePage = () => {
                   <div className="text-[12px] font-bold text-[#8B8EA8] uppercase tracking-wider">Recent Trades</div>
                 </div>
                 <div className="flex-1 overflow-y-auto no-scrollbar p-3 font-mono text-xs">
-                  <div className="grid grid-cols-3 text-[#525465] mb-2 uppercase text-[11px] border-b border-[#0D1117]/50 py-1">
+                  <div className="grid grid-cols-3 text-[#9DA0B8] mb-2 uppercase text-[11px] border-b border-[#0D1117]/50 py-1">
                       <span>Price (USDC)</span>
                       <span className="text-right">Size ({currentMarket.baseAsset})</span>
                       <span className="text-right">Time</span>
