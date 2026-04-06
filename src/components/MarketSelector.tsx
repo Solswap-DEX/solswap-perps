@@ -1,4 +1,5 @@
-import React, { useState, useMemo, useRef, useEffect } from 'react';
+import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { PERP_MARKETS } from '@/config/markets';
 import { useTradingStore } from '@/store/tradingStore';
 
@@ -6,7 +7,9 @@ export const MarketSelector = () => {
   const { selectedMarket, setSelectedMarket } = useTradingStore();
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState('');
+  const buttonRef = useRef<HTMLButtonElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0 });
 
   const currentMarket = PERP_MARKETS.find(m => m.symbol === selectedMarket) || PERP_MARKETS[0];
 
@@ -20,23 +23,80 @@ export const MarketSelector = () => {
     );
   }, [search]);
 
+  // Calculate position when opening
+  const updatePosition = useCallback(() => {
+    if (buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      setDropdownPos({
+        top: rect.bottom + 4,
+        left: rect.left,
+      });
+    }
+  }, []);
+
   // Close dropdown on outside click
   useEffect(() => {
+    if (!isOpen) return;
     const handleClickOutside = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+      const target = e.target as Node;
+      if (
+        buttonRef.current && !buttonRef.current.contains(target) &&
+        dropdownRef.current && !dropdownRef.current.contains(target)
+      ) {
         setIsOpen(false);
+        setSearch('');
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  }, [isOpen]);
+
+  // Close on Escape
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsOpen(false);
+        setSearch('');
+      }
+    };
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [isOpen]);
+
+  // Recalculate on scroll/resize while open
+  useEffect(() => {
+    if (!isOpen) return;
+    updatePosition();
+    window.addEventListener('scroll', updatePosition, true);
+    window.addEventListener('resize', updatePosition);
+    return () => {
+      window.removeEventListener('scroll', updatePosition, true);
+      window.removeEventListener('resize', updatePosition);
+    };
+  }, [isOpen, updatePosition]);
+
+  const handleToggle = () => {
+    if (!isOpen) {
+      updatePosition();
+    }
+    setIsOpen(!isOpen);
+    if (isOpen) setSearch('');
+  };
+
+  const handleSelect = (symbol: string) => {
+    setSelectedMarket(symbol);
+    setIsOpen(false);
+    setSearch('');
+  };
 
   return (
-    <div className="relative" ref={dropdownRef}>
+    <>
       {/* Selected Market Button */}
       <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-3 px-4 py-3 bg-[#05070A] hover:bg-[#0D1117] transition-colors rounded-lg border border-transparent hover:border-[#2D2E42]"
+        ref={buttonRef}
+        onClick={handleToggle}
+        className="flex items-center gap-3 px-4 py-3 bg-[#05070A] hover:bg-[#0D1117] transition-colors rounded-lg border border-transparent hover:border-[#2D2E42] flex-shrink-0"
       >
         <div className="w-2 h-2 rounded-full bg-[#00FFA3] animate-pulse" />
         <span className="font-bold text-white text-sm">{currentMarket.symbol}</span>
@@ -48,9 +108,18 @@ export const MarketSelector = () => {
         </svg>
       </button>
 
-      {/* Dropdown */}
-      {isOpen && (
-        <div className="absolute top-full left-0 mt-1 w-[320px] bg-[#0D1117] border border-[#2D2E42] rounded-xl shadow-2xl z-50 overflow-hidden animate-in slide-in-from-top-2 duration-150">
+      {/* Dropdown Portal */}
+      {isOpen && createPortal(
+        <div
+          ref={dropdownRef}
+          className="fixed w-[320px] bg-[#0D1117] border border-[#2D2E42] rounded-xl shadow-2xl overflow-hidden"
+          style={{
+            top: dropdownPos.top,
+            left: dropdownPos.left,
+            zIndex: 9999,
+            animation: 'fadeSlideIn 150ms ease-out',
+          }}
+        >
           {/* Search */}
           <div className="p-3 border-b border-[#1A1B2E]">
             <input
@@ -68,11 +137,7 @@ export const MarketSelector = () => {
             {filteredMarkets.map((market) => (
               <button
                 key={market.symbol}
-                onClick={() => {
-                  setSelectedMarket(market.symbol);
-                  setIsOpen(false);
-                  setSearch('');
-                }}
+                onClick={() => handleSelect(market.symbol)}
                 className={`w-full flex items-center justify-between px-4 py-3 text-left transition-colors ${
                   selectedMarket === market.symbol
                     ? 'bg-[#00D1FF]/10 text-white'
@@ -108,8 +173,20 @@ export const MarketSelector = () => {
           <div className="px-4 py-2 border-t border-[#1A1B2E] text-[10px] text-[#525465] text-center">
             {PERP_MARKETS.length} markets available · Powered by Drift Protocol
           </div>
-        </div>
+        </div>,
+        document.body
       )}
-    </div>
+
+      {/* Portal animation styles */}
+      {isOpen && createPortal(
+        <style>{`
+          @keyframes fadeSlideIn {
+            from { opacity: 0; transform: translateY(-8px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+        `}</style>,
+        document.head
+      )}
+    </>
   );
 };

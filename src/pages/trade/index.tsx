@@ -66,13 +66,15 @@ const TradePage = () => {
         {/* Main Content Area: Chart + Sidebar */}
         <div className="flex-1 flex flex-col border-r border-[#0D1117] overflow-hidden min-h-0">
           <div className="flex flex-col lg:flex-row lg:justify-between items-start lg:items-center bg-[#05070A] flex-shrink-0 border-b border-[#0D1117] min-w-0">
-            <div className="flex items-center min-w-0 flex-1 w-full lg:w-auto overflow-hidden">
+            <div className="flex items-center min-w-0 flex-1 w-full lg:w-auto">
               <MarketSelector />
-              <MarketStatsBar 
-                currentPrice={currentPrice} 
-                priceChange24h={priceChange24h} 
-                symbol={currentMarket.symbol} 
-              />
+              <div className="flex-1 min-w-0 overflow-x-auto overflow-y-visible no-scrollbar">
+                <MarketStatsBar 
+                  currentPrice={currentPrice} 
+                  priceChange24h={priceChange24h} 
+                  symbol={currentMarket.symbol} 
+                />
+              </div>
             </div>
             <div className="hidden lg:flex gap-1 p-2 bg-[#05070A] border-l border-[#0D1117] flex-shrink-0">
               {['1m', '5m', '15m', '1h', '4h', '1D'].map(tf => (
