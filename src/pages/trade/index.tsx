@@ -54,17 +54,20 @@ const TradePage = () => {
   }, [currentPrice]);
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#0C0D14] text-white overflow-x-hidden pb-16 lg:pb-0">
+    <div className="flex flex-col min-h-screen bg-[#0C0D14] text-white overflow-x-hidden">
       <Header />
       <main className="flex flex-col lg:flex-row flex-1 overflow-hidden min-h-0">
+        {/* Mobile: Order Form at top */}
         <div className="lg:hidden w-full p-4 border-b border-[#0D1117] bg-[#05070A] flex-shrink-0">
            <div className="bg-[#0D1117] rounded-xl p-4 border border-[#2D2E42]">
              <OrderForm />
            </div>
         </div>
         
-        {/* Main Content Area: Chart + Sidebar */}
+        {/* Main Content Area: Chart column */}
         <div className="flex-1 flex flex-col border-r border-[#0D1117] overflow-hidden min-h-0">
+
+          {/* Market header bar */}
           <div className="flex flex-col lg:flex-row lg:justify-between items-start lg:items-center bg-[#05070A] flex-shrink-0 border-b border-[#0D1117] min-w-0">
             <div className="flex items-center min-w-0 flex-1 w-full lg:w-auto">
               <MarketSelector />
@@ -91,6 +94,7 @@ const TradePage = () => {
             </div>
           </div>
           
+          {/* Chart + Order Book row */}
           <div className="flex-shrink-0 flex flex-col lg:flex-row overflow-y-auto lg:overflow-hidden lg:h-[520px]">
             {/* Chart Area */}
             <div className="w-full lg:flex-1 relative border-b lg:border-b-0 lg:border-r border-[#0D1117] h-[450px] lg:h-full min-h-[450px] lg:min-h-0 min-w-0 flex-shrink-0">
@@ -99,7 +103,7 @@ const TradePage = () => {
               </div>
             </div>
 
-            {/* Order Book & Trades Strip (Vertical Sidebar) */}
+            {/* Order Book & Trades Strip */}
             <div className="w-full lg:w-[300px] flex flex-col min-h-[600px] lg:min-h-0 overflow-hidden bg-[#05070A] flex-shrink-0">
               {/* Order Book Section */}
               <div className="flex-[3] flex flex-col overflow-hidden border-b border-[#0D1117]">
@@ -156,9 +160,36 @@ const TradePage = () => {
               </div>
             </div>
           </div>
+
+          {/* ── Positions / Orders / Fills / Assets / Liquidation ── */}
+          <div className="border-t border-[#0D1117] bg-[#05070A] flex flex-col h-[220px] flex-shrink-0">
+            <div className="flex gap-6 border-b border-[#0D1117] px-4 flex-shrink-0 overflow-x-auto no-scrollbar">
+              {(['positions', 'orders', 'fills', 'assets', 'liquidation'] as FooterTab[]).map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setFooterTab(tab)}
+                  className={`py-3 font-bold text-xs uppercase tracking-widest whitespace-nowrap transition-all ${
+                    footerTab === tab
+                      ? 'text-[#00D1FF] border-b-2 border-[#00D1FF]'
+                      : 'text-[#8B8EA8] hover:text-white'
+                  }`}
+                >
+                  {tab}
+                </button>
+              ))}
+            </div>
+            <div className="flex-1 overflow-y-auto bg-[#05070A]">
+              {footerTab === 'positions' && <PositionsTable />}
+              {footerTab === 'orders' && <OpenOrdersTable />}
+              {footerTab === 'fills' && <FillsTable />}
+              {footerTab === 'assets' && <AssetsPanel />}
+              {footerTab === 'liquidation' && <LiquidationPanel />}
+            </div>
+          </div>
+
         </div>
 
-        {/* Zone B: Order Form (Desktop) */}
+        {/* Zone B: Order Form (Desktop right panel) */}
         <div className="hidden lg:flex flex-col w-[350px] flex-shrink-0 p-4 border-l border-[#0D1117] bg-[#05070A] overflow-y-auto min-h-0">
           
           <RiskRatePanel />
@@ -182,31 +213,6 @@ const TradePage = () => {
           </div>
         </div>
       </main>
-
-      <footer className="h-[200px] border-t border-[#0D1117] bg-[#05070A] flex flex-col flex-shrink-0">
-        <div className="flex gap-8 border-b border-[#0D1117] px-6 flex-shrink-0 overflow-x-auto no-scrollbar">
-          {['positions', 'orders', 'fills', 'assets', 'liquidation'].map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setFooterTab(tab as FooterTab)}
-              className={`py-3 font-bold text-xs uppercase tracking-widest whitespace-nowrap transition-all ${
-                footerTab === tab
-                  ? 'text-[#00D1FF] border-b-2 border-[#00D1FF]'
-                  : 'text-[#8B8EA8] hover:text-white'
-              }`}
-            >
-              {tab}
-            </button>
-          ))}
-        </div>
-        <div className="flex-1 overflow-y-auto bg-[#05070A]">
-          {footerTab === 'positions' && <PositionsTable />}
-          {footerTab === 'orders' && <OpenOrdersTable />}
-          {footerTab === 'fills' && <FillsTable />}
-          {footerTab === 'assets' && <AssetsPanel />}
-          {footerTab === 'liquidation' && <LiquidationPanel />}
-        </div>
-      </footer>
     </div>
   );
 };
