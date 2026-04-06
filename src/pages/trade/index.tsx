@@ -136,8 +136,8 @@ const TradePage = () => {
                   {orderBook.asks.map((ask, i) => (
                       <div key={`ask-${i}`} className="grid grid-cols-3 text-[#FF4D6D] py-0.5 hover:bg-[#FF4D6D]/5 transition-colors">
                           <span>{ask.price}</span>
-                          <span className="text-right text-[#8B8EA8]">{ask.size}</span>
-                          <span className="text-right text-[#525465]">${ask.total.split('.')[0]}</span>
+                          <span className="text-right text-white">{ask.size}</span>
+                          <span className="text-right text-white/60">${ask.total.split('.')[0]}</span>
                       </div>
                   ))}
                   <div className="my-2 py-2 border-y border-[#0D1117]/50 text-center text-sm font-bold text-[#00FFA3] bg-[#00FFA3]/5">
@@ -146,8 +146,8 @@ const TradePage = () => {
                   {orderBook.bids.map((bid, i) => (
                       <div key={`bid-${i}`} className="grid grid-cols-3 text-[#00FFA3] py-0.5 hover:bg-[#00FFA3]/5 transition-colors">
                           <span>{bid.price}</span>
-                          <span className="text-right text-[#8B8EA8]">{bid.size}</span>
-                          <span className="text-right text-[#525465]">${bid.total.split('.')[0]}</span>
+                          <span className="text-right text-white">{bid.size}</span>
+                          <span className="text-right text-white/60">${bid.total.split('.')[0]}</span>
                       </div>
                   ))}
                 </div>
@@ -169,8 +169,8 @@ const TradePage = () => {
                           <span className={trade.side === 'BUY' ? 'text-[#00FFA3]' : 'text-[#FF4D6D]'}>
                               {trade.price}
                           </span>
-                          <span className="text-right text-[#8B8EA8]">{trade.size}</span>
-                          <span className="text-right text-[#525465]">{trade.time.split(' ')[0]}</span>
+                          <span className="text-right text-white">{trade.size}</span>
+                          <span className="text-right text-white/60">{trade.time.split(' ')[0]}</span>
                       </div>
                   ))}
                 </div>
