@@ -65,9 +65,6 @@ export const TradingView: React.FC<TradingViewProps> = ({ pool, timeframe }) => 
           save_image: false,
           container_id: chartContainerRef.current.id,
           toolbar_bg: "#05070A",
-          studies: [
-            "Volume@tv-basicstudies"
-          ]
         });
       }
     });
