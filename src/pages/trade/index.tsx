@@ -12,6 +12,8 @@ import { PERP_MARKETS } from '@/config/markets';
 import { useTradingStore } from '@/store/tradingStore';
 import { useMarketData } from '@/hooks/useMarketData';
 import { useOrderBook } from '@/hooks/useOrderBook';
+import { MarketStatsBar } from '@/components/MarketStatsBar';
+import { RiskRatePanel } from '@/components/RiskRatePanel';
 
 type FooterTab = 'positions' | 'orders' | 'fills' | 'assets' | 'liquidation';
 
@@ -63,9 +65,16 @@ const TradePage = () => {
         
         {/* Main Content Area: Chart + Sidebar */}
         <div className="flex-1 flex flex-col border-r border-[#0D1117] overflow-hidden min-h-0">
-          <div className="flex justify-between items-center bg-[#05070A] flex-shrink-0">
-            <MarketSelector />
-            <div className="flex gap-1 p-2 bg-[#05070A]">
+          <div className="flex flex-col lg:flex-row lg:justify-between items-start lg:items-center bg-[#05070A] flex-shrink-0 border-b border-[#0D1117] min-w-0">
+            <div className="flex items-center min-w-0 flex-1 w-full lg:w-auto overflow-hidden">
+              <MarketSelector />
+              <MarketStatsBar 
+                currentPrice={currentPrice} 
+                priceChange24h={priceChange24h} 
+                symbol={currentMarket.symbol} 
+              />
+            </div>
+            <div className="hidden lg:flex gap-1 p-2 bg-[#05070A] border-l border-[#0D1117] flex-shrink-0">
               {['1m', '5m', '15m', '1h', '4h', '1D'].map(tf => (
                 <button
                   key={tf}
@@ -149,6 +158,9 @@ const TradePage = () => {
 
         {/* Zone B: Order Form (Desktop) */}
         <div className="hidden lg:flex flex-col w-[350px] flex-shrink-0 p-4 border-l border-[#0D1117] bg-[#05070A] overflow-y-auto min-h-0">
+          
+          <RiskRatePanel />
+
           <div className="text-xs font-bold text-[#8B8EA8] mb-4 uppercase tracking-wider flex items-center gap-2 flex-shrink-0">
             <span className="w-2 h-2 rounded-full bg-[#00D1FF] animate-pulse"></span>
             Trade Execution
