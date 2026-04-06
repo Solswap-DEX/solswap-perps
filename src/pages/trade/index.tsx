@@ -8,6 +8,10 @@ import { OpenOrdersTable } from '@/components/OpenOrdersTable';
 import { FillsTable } from '@/components/FillsTable';
 import { AssetsPanel } from '@/components/AssetsPanel';
 import { LiquidationPanel } from '@/components/LiquidationPanel';
+import { MarketsSidebar } from '@/components/MarketsSidebar';
+import { TPSLTable } from '@/components/TPSLTable';
+import { PositionHistoryTable } from '@/components/PositionHistoryTable';
+import { OrderHistoryTable } from '@/components/OrderHistoryTable';
 import { PERP_MARKETS } from '@/config/markets';
 import { useTradingStore } from '@/store/tradingStore';
 import { useMarketData } from '@/hooks/useMarketData';
@@ -15,7 +19,18 @@ import { useOrderBook } from '@/hooks/useOrderBook';
 import { MarketStatsBar } from '@/components/MarketStatsBar';
 import { RiskRatePanel } from '@/components/RiskRatePanel';
 
-type FooterTab = 'positions' | 'orders' | 'fills' | 'assets' | 'liquidation';
+type FooterTab = 'positions' | 'orders' | 'tp_sl' | 'fills' | 'position_history' | 'order_history' | 'assets' | 'liquidation';
+
+const TAB_LABELS: Record<FooterTab, string> = {
+  positions: 'Positions',
+  orders: 'Pending',
+  tp_sl: 'TP/SL',
+  fills: 'Filled',
+  position_history: 'Position history',
+  order_history: 'Order history',
+  liquidation: 'Liquidation',
+  assets: 'Assets'
+};
 
 const TradePage = () => {
   const { selectedMarket } = useTradingStore();
@@ -57,6 +72,8 @@ const TradePage = () => {
     <div className="flex flex-col min-h-screen bg-[#0C0D14] text-white overflow-x-hidden">
       <Header />
       <main className="flex flex-col lg:flex-row flex-1 overflow-hidden min-h-0">
+        <MarketsSidebar />
+        
         {/* Mobile: Order Form at top */}
         <div className="lg:hidden w-full p-4 border-b border-[#0D1117] bg-[#05070A] flex-shrink-0">
            <div className="bg-[#0D1117] rounded-xl p-4 border border-[#2D2E42]">
@@ -108,10 +125,10 @@ const TradePage = () => {
               {/* Order Book Section */}
               <div className="flex-[3] flex flex-col overflow-hidden border-b border-[#0D1117]">
                 <div className="p-3 bg-[#05070A] border-b border-[#0D1117] flex-shrink-0">
-                  <div className="text-[10px] font-bold text-[#8B8EA8] uppercase tracking-wider">Order Book</div>
+                  <div className="text-[12px] font-bold text-[#8B8EA8] uppercase tracking-wider">Order Book</div>
                 </div>
-                <div className="flex-1 overflow-y-auto no-scrollbar p-3 font-mono text-[10px]">
-                  <div className="grid grid-cols-3 text-[#525465] mb-2 uppercase text-[9px] sticky top-0 bg-[#05070A] py-1 z-10 border-b border-[#0D1117]/50">
+                <div className="flex-1 overflow-y-auto no-scrollbar p-3 font-mono text-xs">
+                  <div className="grid grid-cols-3 text-[#525465] mb-2 uppercase text-[11px] sticky top-0 bg-[#05070A] py-1 z-10 border-b border-[#0D1117]/50">
                       <span>Price (USDC)</span>
                       <span className="text-right">Size ({currentMarket.baseAsset})</span>
                       <span className="text-right">Total</span>
@@ -139,10 +156,10 @@ const TradePage = () => {
               {/* Recent Trades Section */}
               <div className="flex-[2] flex flex-col overflow-hidden">
                 <div className="p-3 bg-[#05070A] border-b border-[#0D1117] flex-shrink-0">
-                  <div className="text-[10px] font-bold text-[#8B8EA8] uppercase tracking-wider">Recent Trades</div>
+                  <div className="text-[12px] font-bold text-[#8B8EA8] uppercase tracking-wider">Recent Trades</div>
                 </div>
-                <div className="flex-1 overflow-y-auto no-scrollbar p-3 font-mono text-[10px]">
-                  <div className="grid grid-cols-3 text-[#525465] mb-2 uppercase text-[9px] border-b border-[#0D1117]/50 py-1">
+                <div className="flex-1 overflow-y-auto no-scrollbar p-3 font-mono text-xs">
+                  <div className="grid grid-cols-3 text-[#525465] mb-2 uppercase text-[11px] border-b border-[#0D1117]/50 py-1">
                       <span>Price (USDC)</span>
                       <span className="text-right">Size ({currentMarket.baseAsset})</span>
                       <span className="text-right">Time</span>
@@ -164,7 +181,7 @@ const TradePage = () => {
           {/* ── Positions / Orders / Fills / Assets / Liquidation ── */}
           <div className="border-t border-[#0D1117] bg-[#05070A] flex flex-col h-[220px] flex-shrink-0">
             <div className="flex gap-6 border-b border-[#0D1117] px-4 flex-shrink-0 overflow-x-auto no-scrollbar">
-              {(['positions', 'orders', 'fills', 'assets', 'liquidation'] as FooterTab[]).map((tab) => (
+              {(Object.keys(TAB_LABELS) as FooterTab[]).map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setFooterTab(tab)}
@@ -174,14 +191,17 @@ const TradePage = () => {
                       : 'text-[#8B8EA8] hover:text-white'
                   }`}
                 >
-                  {tab}
+                  {TAB_LABELS[tab]}
                 </button>
               ))}
             </div>
             <div className="flex-1 overflow-y-auto bg-[#05070A]">
               {footerTab === 'positions' && <PositionsTable />}
               {footerTab === 'orders' && <OpenOrdersTable />}
+              {footerTab === 'tp_sl' && <TPSLTable />}
               {footerTab === 'fills' && <FillsTable />}
+              {footerTab === 'position_history' && <PositionHistoryTable />}
+              {footerTab === 'order_history' && <OrderHistoryTable />}
               {footerTab === 'assets' && <AssetsPanel />}
               {footerTab === 'liquidation' && <LiquidationPanel />}
             </div>
