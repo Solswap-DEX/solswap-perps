@@ -1,0 +1,10 @@
+{
+  "name": "SolSwap Perpetuals",
+  "short_name": "SolSwap Perps",
+  "description": "Trade perpetual futures on Solana with up to 20x leverage.",
+  "start_url": "/trade",
+  "display": "standalone",
+  "background_color": "#05070A",
+  "theme_color": "#00E5A0",
+  "icons": []
+}
