@@ -16,16 +16,20 @@ function MyApp({ Component, pageProps }: AppProps) {
     <>
       <Head>
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+        <link rel="icon" type="image/png" href="/og-image.png" />
         <meta name="description" content="SolSwap Perpetuals — Trade perpetual futures on Solana with up to 20x leverage." />
         <meta property="og:title" content="SolSwap Perpetuals" />
         <meta property="og:description" content="Trade perpetual futures on Solana with up to 20x leverage." />
         <meta property="og:url" content="https://perps.solswap.cloud/" />
         <meta property="og:type" content="website" />
         <meta property="og:site_name" content="SolSwap Perpetuals" />
+        <meta property="og:image" content="https://perps.solswap.cloud/og-image.png" />
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:site" content="@SolSwapProtocol" />
         <meta name="twitter:title" content="SolSwap Perpetuals" />
         <meta name="twitter:description" content="Trade perpetual futures on Solana with up to 20x leverage." />
+        <meta name="twitter:image" content="https://perps.solswap.cloud/og-image.png" />
         <link rel="manifest" href="/manifest.json" />
         <title>SolSwap Perpetuals — Trade on Solana</title>
       </Head>
