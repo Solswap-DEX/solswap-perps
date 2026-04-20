@@ -334,7 +334,7 @@ export const OrderForm = () => {
                 placeholder="0.00"
                 className="w-full"
               />
-              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-[#8B8EA8]">USDC</span>
+                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-[#8B8EA8]">{currentMarket.quoteAsset || 'USDC'}</span>
             </div>
           </div>
         )}
@@ -387,9 +387,15 @@ export const OrderForm = () => {
       {/* ── Fee Breakdown Summary ──────────────────────────────────────────────── */}
       <div className="bg-[#0D1117] rounded-lg p-3 flex flex-col gap-2 text-[11px]">
         <div className="flex justify-between">
-          <span className="text-[#8B8EA8]">Liquidation Price</span>
-          <span className="text-white">
-            {driftClient && driftClient.hasUser() ? 'Calc. Post-Trade' : '--'}
+          <span className="text-[#8B8EA8]">Current Liq. Price</span>
+          <span className="text-[#FF4D6D] font-bold">
+            {(() => {
+               if(!driftClient || !driftClient.hasUser()) return '--';
+               try {
+                 const liq = driftClient.getUser().liquidationPrice(currentMarket.marketIndex).toNumber() / 1e6;
+                 return liq > 0 ? `$${liq.toFixed(4)}` : 'None';
+               } catch(e) { return '--'; }
+            })()}
           </span>
         </div>
         <div className="flex justify-between">

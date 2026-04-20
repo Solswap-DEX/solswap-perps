@@ -17,8 +17,15 @@ export const LiquidationPanel = () => {
       // Drift usually returns health as a number between 0 and 100
       const accountHealth = user.getHealth(); 
       health = `${accountHealth}%`;
-      // Global account liq price is ambiguous when holding multiple positions or no positions.
-      liqPrice = "N/A"; 
+      const activePositions = user.getActivePerpPositions();
+      const prices = [];
+      for (const pos of activePositions) {
+          try {
+              const lPrice = user.liquidationPrice(pos.marketIndex).toNumber() / 1e6;
+              if (lPrice > 0) prices.push(`$${lPrice.toFixed(2)}`);
+          } catch(e) {}
+      }
+      liqPrice = prices.length > 0 ? prices.join(", ") : "N/A"; 
     } catch(e) {
       console.error(e);
     }

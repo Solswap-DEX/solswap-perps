@@ -24,7 +24,7 @@ export const FillsTable = () => {
   }
 
   if (recentFills.length === 0) {
-    return <div className="p-4 text-sm text-[#8B8EA8]">Sin fills recientes (Pendiente API).</div>;
+    return <div className="p-4 text-sm text-[#8B8EA8]">No hay fills recientes en esta sesión.</div>;
   }
 
   return (
