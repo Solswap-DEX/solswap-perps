@@ -76,9 +76,9 @@ export async function sendWithRetry(
         const { blockhash, lastValidBlockHeight } =
           await driftClient.connection.getLatestBlockhash('confirmed');
 
-        if (tx.message?.recentBlockhash !== undefined) {
-          // VersionedTransaction
-          tx.message.recentBlockhash = blockhash;
+        if (tx.version !== undefined || ('message' in tx && tx.message.recentBlockhash !== undefined)) {
+          // VersionedTransaction - can't simply mutate message, throw explicitly to handle graceful shutdown
+          throw new Error('Cannot automatically retry a VersionedTransaction with blockhash replacement');
         } else if (tx.recentBlockhash !== undefined) {
           // Legacy Transaction
           tx.recentBlockhash = blockhash;

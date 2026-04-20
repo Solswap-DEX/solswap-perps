@@ -68,16 +68,16 @@ export const useDriftClient = () => {
       prevWalletRef.current = currentWallet;
 
       try {
-        const driftConnection = new Connection(DRIFT_CONFIG.rpcUrl, {
-          wsEndpoint: DRIFT_CONFIG.wsUrl,
+        const driftConnection = new Connection(DRIFT_CONFIG.rpcUrls[0], {
+          wsEndpoint: DRIFT_CONFIG.wsUrls[0],
           commitment: 'confirmed',
         });
 
         // Use a dummy wallet when not connected so charts & prices still load
         const providerWallet = wallet || {
           publicKey: Keypair.generate().publicKey,
-          signTransaction: async (tx: any) => tx,
-          signAllTransactions: async (txs: any) => txs,
+          signTransaction: async () => { throw new Error('Not connected to a wallet') },
+          signAllTransactions: async () => { throw new Error('Not connected to a wallet') },
         };
 
         client = new DriftClient({

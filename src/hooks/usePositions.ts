@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useDriftClient } from './useDriftClient';
+import { PERP_MARKETS } from '@/config/markets';
 
 export const usePositions = () => {
   const { driftClient, isConnected } = useDriftClient();
@@ -27,14 +28,38 @@ export const usePositions = () => {
         const formattedPositions = activePositions.map((pos: any) => {
           const marketIndex = pos.marketIndex;
           
-          // Calculate PnL (simplified for UI)
+          // Calculate PnL
           const pnl = user.getUnrealizedPNL(false, marketIndex);
+          
+          const market = PERP_MARKETS.find(m => m.marketIndex === marketIndex);
+          const symbol = market ? market.symbol : `MARKET-${marketIndex}`;
+
+          let entryPrice = 0;
+          if (pos.baseAssetAmount.toNumber() !== 0) {
+             const baseAssets = Math.abs(pos.baseAssetAmount.toNumber()) / 1e9;
+             const quoteTokens = Math.abs(pos.quoteEntryAmount.toNumber()) / 1e6;
+             entryPrice = baseAssets !== 0 ? quoteTokens / baseAssets : 0;
+          }
+
+          let markPrice = 0;
+          try {
+             const oracle = driftClient.getOracleDataForPerpMarket(marketIndex);
+             markPrice = oracle ? oracle.price.toNumber() / 1e6 : 0;
+          } catch(e) {}
+
+          let liqPrice = 0;
+          try {
+             liqPrice = user.liquidationPrice(marketIndex).toNumber() / 1e6;
+          } catch(e) {}
           
           return {
             ...pos,
-            marketName: `MARKET-${marketIndex}`, // Replace with symbol lookup
-            pnl: pnl.toNumber() / 10**6, // Drift uses 6 decimals for USDC
+            marketName: symbol,
+            pnl: pnl.toNumber() / 1e6, // Drift uses 6 decimals for USDC
             direction: pos.baseAssetAmount.isNeg() ? 'SHORT' : 'LONG',
+            entryPrice,
+            markPrice,
+            liqPrice,
           };
         });
 

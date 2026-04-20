@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { useDriftClient } from '@/hooks/useDriftClient';
+import { PERP_MARKETS } from '@/config/markets';
 
 export const MarketStatsBar = ({ currentPrice, priceChange24h, symbol }: any) => {
   const [timeLeft, setTimeLeft] = useState('');
@@ -30,6 +32,36 @@ export const MarketStatsBar = ({ currentPrice, priceChange24h, symbol }: any) =>
   const markOffset = currentPrice ? currentPrice * 0.0001 : 0;
   const markPrice = currentPrice ? currentPrice - markOffset : null;
   const indexPrice = currentPrice ? currentPrice + markOffset : null;
+
+  const { driftClient } = useDriftClient();
+  const [stats, setStats] = useState({ oi: '--', fr: '--', vol: '--' });
+
+  useEffect(() => {
+    if (!driftClient || !symbol) return;
+    try {
+      const currentMarketConfig = PERP_MARKETS.find(m => m.symbol === symbol);
+      if (!currentMarketConfig) return;
+      const marketAccount = driftClient.getPerpMarketAccount(currentMarketConfig.marketIndex);
+      if (marketAccount) {
+        // Approximate OI = long + short base asset amounts div by 1e9
+        const oiRaw = (Math.abs(marketAccount.amm.baseAssetAmountLong.toNumber()) + Math.abs(marketAccount.amm.baseAssetAmountShort.toNumber())) / 1e9;
+        const oiUsdc = oiRaw * (currentPrice || 1);
+        const oiStr = oiUsdc > 1000000 ? (oiUsdc / 1000000).toFixed(2) + 'M' : (oiUsdc / 1000).toFixed(1) + 'k';
+        
+        // Funding rate is highly scaled in Drift V2, let's parse a reasonable format
+        const frCalc = (marketAccount.amm.lastFundingRate.toNumber() / 1e9) * 100;
+        const frStr = frCalc.toFixed(4) + '%';
+        
+        // 24H volume uses quote asset volume if available, or fallback
+        const volRaw = marketAccount.amm.quoteVolume24H ? marketAccount.amm.quoteVolume24H.toNumber() / 1e6 : 0;
+        const volStr = volRaw > 0 ? (volRaw > 1000000 ? (volRaw / 1000000).toFixed(2) + 'M' : (volRaw / 1000).toFixed(1) + 'k') : '---';
+
+        setStats({ oi: oiStr, fr: frStr, vol: volStr });
+      }
+    } catch (e) {
+      // Graceful fail
+    }
+  }, [driftClient, symbol, currentPrice]);
 
   return (
     <div className="hidden lg:flex items-center gap-6 text-xs whitespace-nowrap overflow-x-auto no-scrollbar px-6 flex-1 min-w-0">
@@ -64,14 +96,14 @@ export const MarketStatsBar = ({ currentPrice, priceChange24h, symbol }: any) =>
       {/* 24h Volume */}
       <div className="flex flex-col gap-0.5">
         <span className="text-[10px] text-[#8B8EA8]">24h volume</span>
-        <span className="font-mono text-white font-bold tracking-tight">4.91M</span>
+        <span className="font-mono text-white font-bold tracking-tight">{stats.vol}</span>
       </div>
 
       {/* Funding Rate */}
       <div className="flex flex-col gap-[3px]">
         <span className="text-[9px] text-[#00D1FF] bg-[#00D1FF]/10 px-1 rounded-[3px] w-fit font-bold uppercase tracking-wider">Pred. funding rate</span>
         <span className="font-mono text-[#8B8EA8] tracking-tight">
-          <span className="text-white font-bold">0.0100%</span> in {timeLeft || '--:--:--'}
+          <span className="text-white font-bold">{stats.fr}</span> in {timeLeft || '--:--:--'}
         </span>
       </div>
 
@@ -79,7 +111,7 @@ export const MarketStatsBar = ({ currentPrice, priceChange24h, symbol }: any) =>
       <div className="flex flex-col gap-0.5">
         <span className="text-[10px] text-[#8B8EA8]">Open interest</span>
         <span className="font-mono text-[#8B8EA8] tracking-tight">
-          <span className="text-white font-bold">2.27M</span> USDC
+          <span className="text-white font-bold">{stats.oi}</span> USDC
         </span>
       </div>
 

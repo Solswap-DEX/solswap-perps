@@ -16,6 +16,7 @@ import { PERP_MARKETS } from '@/config/markets';
 import { useTradingStore } from '@/store/tradingStore';
 import { useMarketData } from '@/hooks/useMarketData';
 import { useOrderBook } from '@/hooks/useOrderBook';
+import { useDriftClient } from '@/hooks/useDriftClient';
 import { MarketStatsBar } from '@/components/MarketStatsBar';
 import { RiskRatePanel } from '@/components/RiskRatePanel';
 
@@ -39,6 +40,18 @@ const TradePage = () => {
   const currentMarket = PERP_MARKETS.find(m => m.symbol === selectedMarket) || PERP_MARKETS[0];
   const { currentPrice, priceChange24h } = useMarketData(currentMarket.geckoPool, timeframe);
   const { orderBook } = useOrderBook(currentPrice ?? null);
+  const { driftClient } = useDriftClient();
+
+  const freeCollateral = driftClient && driftClient.hasUser() 
+     ? (driftClient.getUser().getFreeCollateral().toNumber() / 1e6).toFixed(2) 
+     : '0.00';
+
+  const accountHealth = driftClient && driftClient.hasUser()
+     ? driftClient.getUser().getHealth()
+     : 100;
+  
+  const healthColor = accountHealth > 50 ? 'text-[#00FFA3]' : accountHealth > 20 ? 'text-[#FFD166]' : 'text-[#FF4D6D]';
+  const healthLabel = accountHealth > 50 ? 'SECURE' : accountHealth > 20 ? 'WARNING' : 'DANGER';
 
   const [trades, setTrades] = useState<any[]>([]);
 
@@ -224,11 +237,11 @@ const TradePage = () => {
           <div className="mt-6 flex flex-col gap-4 px-2 mb-6 flex-shrink-0">
             <div className="flex justify-between text-xs">
               <span className="text-[#8B8EA8]">Available Balance</span>
-              <span className="text-white font-mono font-bold font-medium tracking-tight">0.00 USDC</span>
+              <span className="text-white font-mono font-bold font-medium tracking-tight">{freeCollateral} USDC</span>
             </div>
             <div className="flex justify-between text-xs pt-4 border-t border-[#0D1117]">
               <span className="text-[#8B8EA8]">Account Health</span>
-              <span className="text-[#00FFA3] font-bold">100% SECURE</span>
+              <span className={`${healthColor} font-bold`}>{accountHealth}% {healthLabel}</span>
             </div>
           </div>
         </div>

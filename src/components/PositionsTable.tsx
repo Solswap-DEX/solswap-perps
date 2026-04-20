@@ -56,9 +56,15 @@ export const PositionsTable = () => {
                 </span>
               </td>
               <td className="px-4 py-4 text-white">{(Math.abs(pos.baseAssetAmount.toNumber()) / 10**9).toFixed(3)}</td>
-              <td className="px-4 py-4 text-white">--</td>
-              <td className="px-4 py-4 text-white">--</td>
-              <td className="px-4 py-4 text-[#FF4D6A]">--</td>
+              <td className="px-4 py-4 text-white">
+                {pos.entryPrice ? `$${pos.entryPrice.toFixed(4)}` : '--'}
+              </td>
+              <td className="px-4 py-4 text-white">
+                {pos.markPrice ? `$${pos.markPrice.toFixed(4)}` : '--'}
+              </td>
+              <td className="px-4 py-4 text-[#FF4D6A]">
+                {pos.liqPrice ? `$${pos.liqPrice.toFixed(4)}` : '--'}
+              </td>
               <td className={`px-4 py-4 font-bold ${pos.pnl >= 0 ? 'text-[#00C896]' : 'text-[#FF4D6A]'}`}>
                 {pos.pnl >= 0 ? '+' : ''}{pos.pnl.toFixed(2)} USDC
               </td>
