@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 import React, { useState } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { SelectWalletModal } from './SelectWalletModal';

@@ -334,7 +334,7 @@ export const OrderForm = () => {
                 placeholder="0.00"
                 className="w-full"
               />
-                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-[#8B8EA8]">{currentMarket.quoteAsset || 'USDC'}</span>
+                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-[#8B8EA8]">{(currentMarket as any).quoteAsset || 'USDC'}</span>
             </div>
           </div>
         )}
