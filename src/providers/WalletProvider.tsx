@@ -15,7 +15,7 @@ require('@solana/wallet-adapter-react-ui/styles.css');
 
 export const SolanaWalletProvider = ({ children }: { children: React.ReactNode }) => {
     const network = WalletAdapterNetwork.Mainnet;
-    const endpoint = useMemo(() => DRIFT_CONFIG.rpcUrl, []);
+    const endpoint = useMemo(() => DRIFT_CONFIG.rpcUrls[0], []);
 
     const wallets = useMemo(
         () => [
