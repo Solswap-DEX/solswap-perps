@@ -5,7 +5,7 @@ export const AssetsPanel = () => {
   const { driftClient, isConnected } = useDriftClient();
 
   if (!driftClient || !isConnected || !driftClient.hasUser()) {
-    return <div className="p-4 text-sm text-[#8B8EA8]">Conecta tu wallet para ver tus assets.</div>;
+    return <div className="p-4 text-sm text-[#8B8EA8]">Connect your wallet to view assets.</div>;
   }
 
   let totalCollateral = '--';

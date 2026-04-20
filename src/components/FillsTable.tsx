@@ -5,7 +5,7 @@ export const FillsTable = () => {
   const { driftClient, isConnected } = useDriftClient();
 
   if (!driftClient || !isConnected || !driftClient.hasUser()) {
-    return <div className="p-4 text-sm text-[#8B8EA8]">Conecta tu wallet para ver tus fills.</div>;
+    return <div className="p-4 text-sm text-[#8B8EA8]">Connect your wallet to view fills.</div>;
   }
 
   let recentFills: any[] = [];
@@ -24,7 +24,7 @@ export const FillsTable = () => {
   }
 
   if (recentFills.length === 0) {
-    return <div className="p-4 text-sm text-[#8B8EA8]">No hay fills recientes en esta sesión.</div>;
+    return <div className="p-4 text-sm text-[#8B8EA8]">No recent fills for this session.</div>;
   }
 
   return (

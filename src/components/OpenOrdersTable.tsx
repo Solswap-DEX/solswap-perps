@@ -6,7 +6,7 @@ export const OpenOrdersTable = () => {
   const { driftClient, isConnected } = useDriftClient();
 
   if (!driftClient || !isConnected || !driftClient.hasUser()) {
-    return <div className="p-4 text-sm text-[#8B8EA8]">Conecta tu wallet para ver tus open orders.</div>;
+    return <div className="p-4 text-sm text-[#8B8EA8]">Connect your wallet to view open orders.</div>;
   }
   let openOrders: any[] = [];
   if (driftClient && driftClient.hasUser()) {
@@ -25,7 +25,7 @@ export const OpenOrdersTable = () => {
   }
 
   if (openOrders.length === 0) {
-    return <div className="p-4 text-sm text-[#8B8EA8]">No hay open orders.</div>;
+    return <div className="p-4 text-sm text-[#8B8EA8]">No open orders.</div>;
   }
 
   return (
