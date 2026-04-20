@@ -73,6 +73,7 @@ function FeeTooltip() {
 export const OrderForm = () => {
   const { connected } = useWallet();
   const {
+    driftClient,
     placeOrder,
     enableTrading,
     onboardingStatus,
