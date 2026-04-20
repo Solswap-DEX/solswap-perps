@@ -14,4 +14,18 @@ export const DRIFT_CONFIG = {
   network: "mainnet-beta" as const,
   defaultMarket: "SOL-PERP",
   defaultLeverage: 5,
+  maxLeverage: 20,
+};
+
+export const validateLeverage = (user: any, requestedLeverage: number): { valid: boolean; reason?: string } => {
+  if (!user) return { valid: true };
+  try {
+    const health = user.getHealth();
+    if (requestedLeverage > 10 && health < 40) {
+      return { valid: false, reason: 'Health too low for high leverage' };
+    }
+  } catch (e) {
+    // ignore
+  }
+  return { valid: true };
 };

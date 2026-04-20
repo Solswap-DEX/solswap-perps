@@ -4,7 +4,7 @@ import { useTradingStore } from '@/store/tradingStore';
 import { useDriftClient } from '@/hooks/useDriftClient';
 import { PERP_MARKETS } from '@/config/markets';
 import { SelectWalletModal } from './SolWallet/SelectWalletModal';
-import { DRIFT_CONFIG } from '@/config/driftConfig';
+import { DRIFT_CONFIG, validateLeverage } from '@/config/driftConfig';
 import { OrderStatusBar, OrderStatusState } from './OrderStatusBar';
 import {
   trackTradeSubmitted,
@@ -100,6 +100,28 @@ export const OrderForm = () => {
   const currentMarket = PERP_MARKETS.find(m => m.symbol === selectedMarket) || PERP_MARKETS[0];
   const sizeNum       = parseFloat(orderSize) || 0;
 
+  const handlePercentSize = (pct: string) => {
+    if (!driftClient || !driftClient.hasUser()) return;
+    const pctVal = parseFloat(pct) / 100;
+    try {
+      const freeCollateral = driftClient.getUser().getFreeCollateral().toNumber() / 1e6;
+      let price = parseFloat(limitPrice);
+      if (!price || isNaN(price)) {
+        try {
+          const oracleData = driftClient.getOracleDataForPerpMarket(currentMarket.marketIndex);
+          // Drift oracle price is scaled by 1e6 usually
+          price = oracleData ? oracleData.price.toNumber() / 1e6 : 1;
+        } catch(e) {
+          price = 1;
+        }
+      }
+      const newSize = (freeCollateral * leverage * pctVal) / price;
+      setOrderSize(newSize.toFixed(4));
+    } catch(e) {
+      console.error('Error calculating percent size', e);
+    }
+  };
+
   // Fee breakdown
   const builtFeePercent   = DRIFT_CONFIG.builderInfo.builderFee / 100;       // e.g. 0.10%
   const driftFeePercent   = 0.01;                                             // ~0.01% protocol fee
@@ -145,6 +167,14 @@ export const OrderForm = () => {
     if (orderType === 'limit' && (!limitPrice || parseFloat(limitPrice) <= 0)) {
       setOrderStatusState({ status: 'error', message: 'Enter a valid limit price.' });
       return;
+    }
+
+    if (driftClient && driftClient.hasUser()) {
+      const { valid, reason } = validateLeverage(driftClient.getUser(), leverage);
+      if (!valid) {
+        setOrderStatusState({ status: 'error', message: reason || 'Leverage check failed.' });
+        return;
+      }
     }
 
     setIsSubmitting(true);
@@ -319,12 +349,14 @@ export const OrderForm = () => {
               placeholder="0.00"
               className="w-full"
             />
-            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-[#8B8EA8]">USDC</span>
+            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-[#8B8EA8]">{currentMarket.baseAsset}</span>
           </div>
           <div className="grid grid-cols-4 gap-2 mt-1">
             {['25%', '50%', '75%', '100%'].map((pct) => (
               <button
                 key={pct}
+                type="button"
+                onClick={() => handlePercentSize(pct)}
                 className="bg-[#0D1117] text-[10px] py-1 rounded border border-[#2D2E42] text-[#8B8EA8] hover:border-[#00D1FF] transition-colors"
               >
                 {pct}
@@ -344,7 +376,7 @@ export const OrderForm = () => {
           id="order-leverage"
           type="range"
           min="1"
-          max="20"
+          max={DRIFT_CONFIG.maxLeverage || 20}
           value={leverage}
           onChange={(e) => setLeverage(parseInt(e.target.value))}
           className="w-full accent-[#00D1FF]"
@@ -355,7 +387,9 @@ export const OrderForm = () => {
       <div className="bg-[#0D1117] rounded-lg p-3 flex flex-col gap-2 text-[11px]">
         <div className="flex justify-between">
           <span className="text-[#8B8EA8]">Liquidation Price</span>
-          <span className="text-white">--</span>
+          <span className="text-white">
+            {driftClient && driftClient.hasUser() ? 'Calc. Post-Trade' : '--'}
+          </span>
         </div>
         <div className="flex justify-between">
           <span className="text-[#8B8EA8]">Slippage Tolerance</span>
