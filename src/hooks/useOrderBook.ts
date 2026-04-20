@@ -124,7 +124,7 @@ export const useOrderBook = (basePrice: number | null = null) => {
     } finally {
       setIsLoading(false);
     }
-  }, [driftClient, isConnected, basePrice]);
+  }, [driftClient, isConnected]);
 
   useEffect(() => {
     if (!driftClient || !isConnected) {

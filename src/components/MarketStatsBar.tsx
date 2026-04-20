@@ -52,8 +52,8 @@ export const MarketStatsBar = ({ currentPrice, priceChange24h, symbol }: any) =>
         const frCalc = (marketAccount.amm.lastFundingRate.toNumber() / 1e9) * 100;
         const frStr = frCalc.toFixed(4) + '%';
         
-        // 24H volume uses quote asset volume if available, or fallback
-        const volRaw = marketAccount.amm.quoteVolume24H ? marketAccount.amm.quoteVolume24H.toNumber() / 1e6 : 0;
+        // 24H volume
+        const volRaw = marketAccount.amm.volume24H ? marketAccount.amm.volume24H.toNumber() / 1e6 : 0;
         const volStr = volRaw > 0 ? (volRaw > 1000000 ? (volRaw / 1000000).toFixed(2) + 'M' : (volRaw / 1000).toFixed(1) + 'k') : '---';
 
         setStats({ oi: oiStr, fr: frStr, vol: volStr });
