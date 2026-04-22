@@ -9,10 +9,10 @@ export const NetworkStatusBar = () => {
   const [utcTime, setUtcTime] = useState<string>('');
   
   // Ping the public RPC used by the wallet (not Helius which is reserved for Drift SDK)
-  const rpcUrl = 'https://api.mainnet-beta.solana.com';
+  const rpcUrl = 'https://rpc.ankr.com/solana';
   
   // Determine provider name for display
-  const providerName = 'Solana Mainnet';
+  const providerName = 'Ankr';
 
   useEffect(() => {
     // Basic online/offline browser status
