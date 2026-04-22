@@ -14,7 +14,7 @@ require('@solana/wallet-adapter-react-ui/styles.css');
 
 // Frontend wallet operations use public RPC (cheap, no rate limits)
 // Helius is reserved for Drift SDK backend operations (logsSubscribe, orderbook, enriched data)
-const PUBLIC_RPC = "https://rpc.ankr.com/solana";
+const PUBLIC_RPC = "https://solana-rpc.publicnode.com";
 
 export const SolanaWalletProvider = ({ children }: { children: React.ReactNode }) => {
     const network = WalletAdapterNetwork.Mainnet;

@@ -8,9 +8,9 @@ export const DRIFT_CONFIG = {
     builderFee: Number(process.env.NEXT_PUBLIC_FEE_BPS || "10"), // bps
   },
   rpcUrl: process.env.NEXT_PUBLIC_RPC_URL ||
-    "https://mainnet.helius-rpc.com/?api-key=690983ee-d6ad-49bb-880e-7a9673c12244",
+    "https://solana-rpc.publicnode.com",
   wsUrl: process.env.NEXT_PUBLIC_WS_URL ||
-    "wss://mainnet.helius-rpc.com/?api-key=690983ee-d6ad-49bb-880e-7a9673c12244",
+    "wss://solana-rpc.publicnode.com",
   network: "mainnet-beta" as const,
   defaultMarket: "SOL-PERP",
   defaultLeverage: 5,
