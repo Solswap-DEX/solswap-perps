@@ -8,13 +8,11 @@ export const NetworkStatusBar = () => {
   const [slot, setSlot] = useState<number | null>(null);
   const [utcTime, setUtcTime] = useState<string>('');
   
-  // Use the env variable, or fallback to a standard helius url for displaying the text.
-  const rpcUrl = process.env.NEXT_PUBLIC_RPC_URL || 'https://mainnet.helius-rpc.com';
+  // Ping the public RPC used by the wallet (not Helius which is reserved for Drift SDK)
+  const rpcUrl = 'https://api.mainnet-beta.solana.com';
   
   // Determine provider name for display
-  const providerName = rpcUrl.includes('helius') ? 'Helius' : 
-                       rpcUrl.includes('alchemy') ? 'Alchemy' : 
-                       rpcUrl.includes('quicknode') ? 'QuickNode' : 'Custom RPC';
+  const providerName = 'Solana Mainnet';
 
   useEffect(() => {
     // Basic online/offline browser status

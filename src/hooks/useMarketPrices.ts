@@ -22,7 +22,7 @@ export const useMarketPrices = (pools: string[]) => {
 
   useEffect(() => {
     fetchPrices();
-    const interval = setInterval(fetchPrices, 5000);
+    const interval = setInterval(fetchPrices, 30000);
     return () => clearInterval(interval);
   }, [fetchPrices]);
 

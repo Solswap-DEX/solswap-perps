@@ -75,7 +75,7 @@ export const usePositions = () => {
     };
 
     fetchPositions();
-    const interval = setInterval(fetchPositions, 5000); // 5s refresh
+    const interval = setInterval(fetchPositions, 30000); // 30s refresh
     return () => clearInterval(interval);
   }, [driftClient, isConnected]);
 

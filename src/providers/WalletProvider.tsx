@@ -8,14 +8,17 @@ import { BackpackWalletAdapter } from '@solana/wallet-adapter-backpack';
 import { ExodusWalletAdapter } from '@solana/wallet-adapter-exodus';
 import { TrustWalletAdapter } from '@solana/wallet-adapter-trust';
 import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
-import { DRIFT_CONFIG } from '@/config/driftConfig';
 
 // Default styles that can be overridden by your app
 require('@solana/wallet-adapter-react-ui/styles.css');
 
+// Frontend wallet operations use public RPC (cheap, no rate limits)
+// Helius is reserved for Drift SDK backend operations (logsSubscribe, orderbook, enriched data)
+const PUBLIC_RPC = "https://api.mainnet-beta.solana.com";
+
 export const SolanaWalletProvider = ({ children }: { children: React.ReactNode }) => {
     const network = WalletAdapterNetwork.Mainnet;
-    const endpoint = useMemo(() => DRIFT_CONFIG.rpcUrls[0], []);
+    const endpoint = useMemo(() => PUBLIC_RPC, []);
 
     const wallets = useMemo(
         () => [

@@ -68,8 +68,8 @@ export const useDriftClient = () => {
       prevWalletRef.current = currentWallet;
 
       try {
-        const driftConnection = new Connection(DRIFT_CONFIG.rpcUrls[0], {
-          wsEndpoint: DRIFT_CONFIG.wsUrls[0],
+        const driftConnection = new Connection(DRIFT_CONFIG.rpcUrl, {
+          wsEndpoint: DRIFT_CONFIG.wsUrl,
           commitment: 'confirmed',
         });
 

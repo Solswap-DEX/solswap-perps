@@ -134,7 +134,7 @@ export const useOrderBook = (basePrice: number | null = null) => {
     }
 
     fetchOrderBook();
-    const interval = setInterval(fetchOrderBook, 1000);
+    const interval = setInterval(fetchOrderBook, 10000);
     return () => clearInterval(interval);
   }, [driftClient, isConnected, fetchOrderBook]);
 
