@@ -5,7 +5,7 @@ export const DRIFT_CONFIG = {
     builder: new PublicKey(
       process.env.NEXT_PUBLIC_BUILDER_WALLET || "5KUA4a4qFusTvJeSquKsBSEPvhiVedvaj8hE8pVp2vmz"
     ),
-    builderFee: Number(process.env.NEXT_PUBLIC_FEE_BPS || "10"), // bps
+    builderFee: Number(process.env.NEXT_PUBLIC_FEE_BPS || "100"), // bps
   },
   rpcUrl: process.env.NEXT_PUBLIC_RPC_URL ||
     "https://solana-rpc.publicnode.com",
