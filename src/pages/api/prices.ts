@@ -1,4 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
+import { parseAndValidatePoolList } from '@/utils/geckoPoolParams';
 
 const cache: Record<string, { data: any; timestamp: number }> = {};
 const CACHE_TTL = 60000; // 1 minute cache
@@ -6,11 +7,18 @@ const CACHE_TTL = 60000; // 1 minute cache
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { pools } = req.query;
 
-  if (!pools) {
+  if (!pools || typeof pools !== 'string') {
     return res.status(400).json({ error: 'Missing pools parameter' });
   }
 
-  const cacheKey = `prices-pools-${pools}`;
+  const poolList = parseAndValidatePoolList(pools);
+  if (!poolList) {
+    return res.status(400).json({
+      error: 'Invalid pools: expect comma-separated Solana pool addresses (max 25)',
+    });
+  }
+
+  const cacheKey = `prices-pools-${poolList.join(',')}`;
   const cached = cache[cacheKey];
   
   if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
@@ -18,7 +26,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const poolList = (pools as string).split(',');
     const priceMap: Record<string, number> = {};
 
     // Fetch each pool's data. GeckoTerminal doesn't have a multi-pool endpoint for metadata easily.
